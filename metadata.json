@@ -1,0 +1,5 @@
+{
+  "name": "Bambu Lab Filament Tracker",
+  "description": "Een gespecialiseerde tool voor voorraadbeheer van Bambu Lab PLA en PETG filament, inclusief gewichtsregistratie en kleurbeheer.",
+  "requestFramePermissions": []
+}

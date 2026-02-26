@@ -2,6 +2,8 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import Database from "better-sqlite3";
 import path from "path";
+import fs from "fs";
+import { GoogleGenAI } from "@google/genai";
 
 const db = new Database("filament.db");
 
@@ -30,6 +32,45 @@ async function startServer() {
   app.get("/api/filaments", (req, res) => {
     const filaments = db.prepare("SELECT * FROM filaments ORDER BY lastUsed DESC").all();
     res.json(filaments);
+  });
+
+  app.get("/icon.png", async (req, res) => {
+    const iconPath = path.join(process.cwd(), "public", "icon.png");
+    
+    if (fs.existsSync(iconPath)) {
+      return res.sendFile(iconPath);
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).send("API Key missing");
+    }
+
+    try {
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: {
+          parts: [{ text: 'A professional, modern app icon for a 3D printing filament tracker. The icon features a stylized 3D printer filament spool or a package box, in a vibrant emerald green color scheme with a clean, minimalist design. Rounded corners, high quality, 1024x1024 resolution.' }],
+        },
+        config: { imageConfig: { aspectRatio: "1:1" } }
+      });
+
+      for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData) {
+          const buffer = Buffer.from(part.inlineData.data, 'base64');
+          if (!fs.existsSync(path.join(process.cwd(), "public"))) {
+            fs.mkdirSync(path.join(process.cwd(), "public"));
+          }
+          fs.writeFileSync(iconPath, buffer);
+          return res.type('image/png').send(buffer);
+        }
+      }
+      res.status(500).send("Generation failed");
+    } catch (error) {
+      console.error("Icon generation error:", error);
+      res.status(500).send("Error generating icon");
+    }
   });
 
   app.post("/api/filaments", (req, res) => {

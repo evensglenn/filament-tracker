@@ -1,0 +1,15 @@
+{
+  "short_name": "Filament",
+  "name": "Bambu Lab Filament Tracker",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#F9FAFB",
+  "display": "standalone",
+  "theme_color": "#059669"
+}

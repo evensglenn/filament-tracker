@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
 
   return {
-    base: '/oefenwiel/',
+    base: '/filament-tracker/',
 
     plugins: [react(), tailwindcss()],
     define: {

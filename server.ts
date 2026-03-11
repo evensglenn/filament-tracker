@@ -51,7 +51,7 @@ async function startServer() {
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: {
-          parts: [{ text: 'A professional, modern app icon for a 3D printing filament tracker. The icon features a stylized 3D printer filament spool or a package box, in a vibrant emerald green color scheme with a clean, minimalist design. Rounded corners, high quality, 1024x1024 resolution.' }],
+          parts: [{ text: 'A professional, modern app icon for a 3D printing filament tracker. The icon features a highly detailed, stylized 3D printer filament spool (a circular roll of plastic wire), in a vibrant emerald green color scheme with a clean, minimalist design. NO BOXES, NO PACKAGING. Rounded corners, high quality, 1024x1024 resolution.' }],
         },
         config: { imageConfig: { aspectRatio: "1:1" } }
       });

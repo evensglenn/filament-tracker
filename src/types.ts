@@ -1,4 +1,4 @@
-export type FilamentType = 'PLA' | 'PETG' | 'PLA-CF' | 'PETG-CF' | 'TPU' | 'Other';
+export type FilamentType = 'PLA' | 'PLA Matte' | 'PLA Glow' | 'PETG' | 'PLA-CF' | 'PETG-CF' | 'TPU' | 'Other';
 
 export interface Filament {
   id: number;

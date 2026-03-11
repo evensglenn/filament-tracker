@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Package, Scale, Droplets, ChevronRight, Search, Filter, AlertCircle, Check } from 'lucide-react';
+import { Plus, Trash2, Edit2, Disc, Scale, Droplets, ChevronRight, Search, Filter, AlertCircle, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Filament, FilamentType, FilamentFormData } from './types';
 import { BAMBU_COLORS } from './constants';
+import { filamentService } from './services/filamentService';
 
-const TYPES: FilamentType[] = ['PLA', 'PETG', 'PLA-CF', 'PETG-CF', 'TPU', 'Other'];
+const TYPES: FilamentType[] = ['PLA', 'PLA Matte', 'PLA Glow', 'PETG', 'PLA-CF', 'PETG-CF', 'TPU', 'Other'];
 
 export default function App() {
   const [filaments, setFilaments] = useState<Filament[]>([]);
@@ -24,51 +25,30 @@ export default function App() {
   });
 
   useEffect(() => {
-    fetchFilaments();
+    loadFilaments();
   }, []);
 
-  const fetchFilaments = async () => {
-    try {
-      const res = await fetch('/api/filaments');
-      const data = await res.json();
-      setFilaments(data);
-    } catch (err) {
-      console.error('Laden van filamenten mislukt', err);
-    }
+  const loadFilaments = () => {
+    const data = filamentService.getFilaments();
+    setFilaments(data);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const url = editingId ? `/api/filaments/${editingId}` : '/api/filaments';
-      const method = editingId ? 'PUT' : 'POST';
-      
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      
-      if (res.ok) {
-        fetchFilaments();
-        closeModal();
-      }
-    } catch (err) {
-      console.error('Opslaan van filament mislukt', err);
+    if (editingId) {
+      filamentService.updateFilament(editingId, formData);
+    } else {
+      filamentService.addFilament(formData);
     }
+    loadFilaments();
+    closeModal();
   };
 
   const confirmDelete = async () => {
     if (!deleteId) return;
-    try {
-      const res = await fetch(`/api/filaments/${deleteId}`, { method: 'DELETE' });
-      if (res.ok) {
-        fetchFilaments();
-        setDeleteId(null);
-      }
-    } catch (err) {
-      console.error('Verwijderen van filament mislukt', err);
-    }
+    filamentService.deleteFilament(deleteId);
+    loadFilaments();
+    setDeleteId(null);
   };
 
   const openModal = (filament?: Filament) => {
@@ -106,23 +86,11 @@ export default function App() {
   };
 
   const incrementQuantity = async (filament: Filament) => {
-    try {
-      const updatedQuantity = filament.quantity + 1;
-      const res = await fetch(`/api/filaments/${filament.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...filament,
-          quantity: updatedQuantity
-        }),
-      });
-      
-      if (res.ok) {
-        fetchFilaments();
-      }
-    } catch (err) {
-      console.error('Verhogen van voorraad mislukt', err);
-    }
+    filamentService.updateFilament(filament.id, {
+      ...filament,
+      quantity: filament.quantity + 1
+    });
+    loadFilaments();
   };
 
   const filteredFilaments = filaments.filter(f => {
@@ -147,11 +115,11 @@ export default function App() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-200">
-              <Package size={24} />
+              <Disc size={24} />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight">Filament Tracker</h1>
-              <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Bambu Lab Voorraad</p>
+              <h1 className="text-xl font-bold tracking-tight">Filament tracker</h1>
+              <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Filament Voorraad</p>
             </div>
           </div>
           <button 
@@ -247,10 +215,10 @@ export default function App() {
                     <div className="space-y-4">
                       <div className={`p-4 rounded-2xl flex flex-col items-center justify-center border border-transparent transition-all relative group/qty ${getQuantityColor(filament.quantity)}`}>
                         <div className="flex items-center gap-2 mb-1">
-                          <Package size={18} />
+                          <Disc size={18} />
                           <span className="text-xs font-bold uppercase tracking-wider">Voorraad</span>
                         </div>
-                        <p className="text-3xl font-black">{filament.quantity} <span className="text-lg font-bold">rollen</span></p>
+                        <p className="text-3xl font-black">{filament.quantity} <span className="text-lg font-bold">{filament.quantity === 1 ? 'rol' : 'rollen'}</span></p>
                         
                         <button 
                           onClick={(e) => {
@@ -280,7 +248,7 @@ export default function App() {
         {filteredFilaments.length === 0 && (
           <div className="text-center py-20">
             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-              <Package size={40} />
+              <Disc size={40} />
             </div>
             <h3 className="text-xl font-bold text-gray-900">Geen filamenten gevonden</h3>
             <p className="text-gray-500 mt-2">Pas je zoekopdracht aan of voeg een nieuwe spoel toe.</p>

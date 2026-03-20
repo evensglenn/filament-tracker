@@ -355,32 +355,45 @@ export default function App() {
               );
             })}
 
+            {filteredFilaments.length === 0 && filaments.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="col-span-full py-12 text-center"
+              >
+                <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-300 mx-auto mb-4">
+                  <Search size={32} />
+                </div>
+                <p className="text-gray-500 font-bold">Geen resultaten gevonden</p>
+                <p className="text-sm text-gray-400 mt-1">Probeer een andere zoekterm of filter.</p>
+                {(searchQuery || filterType !== 'All') && (
+                  <button 
+                    onClick={() => { setSearchQuery(''); setFilterType('All'); }}
+                    className="mt-4 text-emerald-600 font-bold text-sm hover:underline"
+                  >
+                    Wis alle filters
+                  </button>
+                )}
+              </motion.div>
+            )}
+
             {/* Add New Card */}
-            <motion.button
-              layout
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              onClick={() => openModal()}
-              className="group relative flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all min-h-[200px]"
-            >
-              <div className="w-12 h-12 bg-gray-50 group-hover:bg-emerald-100 rounded-full flex items-center justify-center text-gray-400 group-hover:text-emerald-600 transition-colors mb-3">
-                <Plus size={24} strokeWidth={3} />
-              </div>
-              <span className="text-sm font-bold text-gray-400 group-hover:text-emerald-600 transition-colors">Voeg toe</span>
-            </motion.button>
+            {(filteredFilaments.length > 0 || filaments.length === 0) && (
+              <motion.button
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                onClick={() => openModal()}
+                className="group relative flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all min-h-[200px]"
+              >
+                <div className="w-12 h-12 bg-gray-50 group-hover:bg-emerald-100 rounded-full flex items-center justify-center text-gray-400 group-hover:text-emerald-600 transition-colors mb-3">
+                  <Plus size={24} strokeWidth={3} />
+                </div>
+                <span className="text-sm font-bold text-gray-400 group-hover:text-emerald-600 transition-colors">Voeg toe</span>
+              </motion.button>
+            )}
           </AnimatePresence>
         </div>
-
-            {/* Empty State */}
-            {filteredFilaments.length === 0 && (
-              <div className="bg-white border border-dashed border-gray-300 rounded-3xl py-20 text-center">
-                <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-300 mx-auto mb-4">
-                  <Disc size={32} />
-                </div>
-                <p className="text-gray-500 font-medium">Geen spoelen gevonden</p>
-                <p className="text-sm text-gray-400">Pas je filters aan of voeg een nieuwe spoel toe.</p>
-              </div>
-            )}
           </>
         )}
       </main>
@@ -577,7 +590,7 @@ export default function App() {
       {/* Version Number */}
       <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 text-center">
         <p className="text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em]">
-          Filament Tracker v1.2.9
+          Filament Tracker v1.3.0
         </p>
       </footer>
     </div>

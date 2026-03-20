@@ -185,17 +185,10 @@ export default function App() {
           <div className="flex items-center gap-3">
             {user ? (
               <div className="flex items-center gap-3">
-                <div className="hidden sm:flex flex-col items-end">
+                <div className="flex flex-col items-end">
                   <span className="text-xs font-bold text-gray-900">{user.displayName}</span>
                   <button onClick={handleLogout} className="text-[10px] font-bold text-red-500 hover:text-red-600 uppercase tracking-wider">Uitloggen</button>
                 </div>
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt={user.displayName || ''} className="w-10 h-10 rounded-xl border border-gray-200" />
-                ) : (
-                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">
-                    <User size={20} />
-                  </div>
-                )}
                 <button onClick={handleLogout} className="sm:hidden p-2 text-gray-400 hover:text-red-500">
                   <LogOut size={20} />
                 </button>
@@ -248,29 +241,27 @@ export default function App() {
                 placeholder="Zoek op kleur of merk..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm"
+                className="w-full h-[46px] pl-10 pr-4 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm font-medium"
               />
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex items-center bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
-                <button 
-                  onClick={() => handleSort('name')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${sortBy === 'name' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
-                >
-                  Naam
-                  {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
-                </button>
-                <button 
-                  onClick={() => handleSort('quantity')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${sortBy === 'quantity' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
-                >
-                  Voorraad
-                  {sortBy === 'quantity' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
-                </button>
-              </div>
+              <button 
+                onClick={() => handleSort('name')}
+                className={`px-4 h-[46px] rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border ${sortBy === 'name' ? 'bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-200' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-900 hover:bg-gray-50'}`}
+              >
+                Naam
+                {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+              </button>
+              <button 
+                onClick={() => handleSort('quantity')}
+                className={`px-4 h-[46px] rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border ${sortBy === 'quantity' ? 'bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-200' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-900 hover:bg-gray-50'}`}
+              >
+                Voorraad
+                {sortBy === 'quantity' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+              </button>
               <button 
                 onClick={() => openModal()}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-emerald-200 shrink-0"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 h-[46px] rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-emerald-200 shrink-0"
               >
                 <Plus size={20} />
                 <span className="hidden sm:inline">Voeg toe</span>
@@ -282,7 +273,7 @@ export default function App() {
               <button 
                 key={option}
                 onClick={() => setFilterType(option)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${filterType === option ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}
+                className={`px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all border ${filterType === option ? 'bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-200' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-900 hover:bg-gray-50'}`}
               >
                 {option === 'All' ? 'Alle' : option === 'Other' ? 'Overig' : option}
               </button>
@@ -324,7 +315,7 @@ export default function App() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-1 shrink-0 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={() => openModal(filament)}
                           className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
@@ -576,28 +567,10 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Low Stock Warning */}
-      {filaments.some(f => f.quantity < 0.5) && (
-        <div className="fixed bottom-6 right-6 z-40">
-          <motion.div 
-            initial={{ x: 100, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            className="bg-amber-50 border border-amber-200 p-4 rounded-2xl shadow-xl flex items-center gap-3 max-w-xs"
-          >
-            <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center text-white shrink-0">
-              <AlertCircle size={20} />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-amber-900">Lage Voorraad Alert</p>
-              <p className="text-xs text-amber-700">Sommige van je spoelen raken bijna op (minder dan 0.5 rol).</p>
-            </div>
-          </motion.div>
-        </div>
-      )}
       {/* Version Number */}
       <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 text-center">
         <p className="text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em]">
-          Filament Tracker v1.2.1
+          Filament Tracker v1.2.7
         </p>
       </footer>
     </div>

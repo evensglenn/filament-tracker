@@ -5,7 +5,7 @@ import { Filament, FilamentType, FilamentFormData } from './types';
 import { BAMBU_COLORS } from './constants';
 import { filamentService } from './services/filamentService';
 
-const TYPES: FilamentType[] = ['PLA', 'PLA Matte', 'PLA Glow', 'PETG', 'PLA-CF', 'PETG-CF', 'TPU', 'Other'];
+const TYPES: FilamentType[] = ['PLA', 'PLA Matte', 'PLA Glow', 'PETG', 'PETG Basic', 'PLA-CF', 'PETG-CF', 'TPU', 'Other'];
 
 export default function App() {
   const [filaments, setFilaments] = useState<Filament[]>([]);
@@ -465,7 +465,7 @@ export default function App() {
       {/* Version Number */}
       <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 text-center">
         <p className="text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em]">
-          Filament Tracker v1.0.6
+          Filament Tracker v1.0.8
         </p>
       </footer>
     </div>

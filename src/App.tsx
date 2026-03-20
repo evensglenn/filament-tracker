@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Disc, Scale, Droplets, ChevronRight, Search, Filter, AlertCircle, Check, ArrowUp, ArrowDown, LogOut, LogIn, User } from 'lucide-react';
+import { Plus, Trash2, Edit2, Disc, ChevronRight, Search, Filter, AlertCircle, Check, ArrowUp, ArrowDown, LogOut, LogIn, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Filament, FilamentType, FilamentFormData } from './types';
 import { BAMBU_COLORS } from './constants';
@@ -378,7 +378,7 @@ export default function App() {
             )}
 
             {/* Add New Card */}
-            {(filteredFilaments.length > 0 || filaments.length === 0) && (
+            {true && (
               <motion.button
                 layout
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -590,7 +590,7 @@ export default function App() {
       {/* Version Number */}
       <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 text-center">
         <p className="text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em]">
-          Filament Tracker v1.3.0
+          Filament Tracker v1.5.0
         </p>
       </footer>
     </div>

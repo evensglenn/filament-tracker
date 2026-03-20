@@ -3,7 +3,7 @@
   "name": "Filament tracker",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "https://picsum.photos/seed/filament/512/512",
       "type": "image/png",
       "sizes": "512x512"
     }

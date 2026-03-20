@@ -119,7 +119,6 @@ export default function App() {
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight">Filament tracker</h1>
-              <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Filament Voorraad</p>
             </div>
           </div>
           <button 
@@ -466,7 +465,7 @@ export default function App() {
       {/* Version Number */}
       <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 text-center">
         <p className="text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em]">
-          Filament Tracker v1.0.2
+          Filament Tracker v1.0.3
         </p>
       </footer>
     </div>

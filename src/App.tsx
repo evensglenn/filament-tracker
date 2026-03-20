@@ -1,55 +1,77 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Disc, Scale, Droplets, ChevronRight, Search, Filter, AlertCircle, Check, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Trash2, Edit2, Disc, Scale, Droplets, ChevronRight, Search, Filter, AlertCircle, Check, ArrowUp, ArrowDown, LogOut, LogIn, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Filament, FilamentType, FilamentFormData } from './types';
 import { BAMBU_COLORS } from './constants';
 import { filamentService } from './services/filamentService';
+import { auth } from './firebase';
+import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 
 const TYPES: FilamentType[] = ['PLA Basic', 'PLA Matte', 'PLA Glow', 'PETG-HF', 'PETG Basic', 'PLA-CF', 'PETG-CF', 'TPU', 'Other'];
 
 export default function App() {
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
   const [filaments, setFilaments] = useState<Filament[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [deleteId, setDeleteId] = useState<number | null>(null);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('All');
   const [sortBy, setSortBy] = useState<'name' | 'quantity'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  
-  const [formData, setFormData] = useState<FilamentFormData>({
-    brand: 'Bambu Lab',
-    type: 'PLA Basic',
-    colorName: '',
-    colorHex: '#000000',
-    quantity: 1,
-    notes: ''
-  });
 
   useEffect(() => {
-    loadFilaments();
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setIsAuthReady(true);
+    });
+    return () => unsubscribeAuth();
   }, []);
 
-  const loadFilaments = () => {
-    const data = filamentService.getFilaments();
-    setFilaments(data);
+  useEffect(() => {
+    if (!isAuthReady || !user) {
+      setFilaments([]);
+      return;
+    }
+
+    const unsubscribeFilaments = filamentService.subscribeToFilaments((data) => {
+      setFilaments(data);
+    });
+
+    return () => unsubscribeFilaments();
+  }, [isAuthReady, user]);
+
+  const handleLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error('Login failed:', error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingId) {
-      filamentService.updateFilament(editingId, formData);
+      await filamentService.updateFilament(editingId, formData);
     } else {
-      filamentService.addFilament(formData);
+      await filamentService.addFilament(formData);
     }
-    loadFilaments();
     closeModal();
   };
 
   const confirmDelete = async () => {
     if (!deleteId) return;
-    filamentService.deleteFilament(deleteId);
-    loadFilaments();
+    await filamentService.deleteFilament(deleteId);
     setDeleteId(null);
   };
 
@@ -88,12 +110,19 @@ export default function App() {
   };
 
   const incrementQuantity = async (filament: Filament) => {
-    filamentService.updateFilament(filament.id, {
-      ...filament,
+    await filamentService.updateFilament(filament.id, {
       quantity: filament.quantity + 1
     });
-    loadFilaments();
   };
+
+  const [formData, setFormData] = useState<FilamentFormData>({
+    brand: 'Bambu Lab',
+    type: 'PLA Basic',
+    colorName: '',
+    colorHex: '#000000',
+    quantity: 1,
+    notes: ''
+  });
 
   const handleSort = (field: 'name' | 'quantity') => {
     if (sortBy === field) {
@@ -153,18 +182,70 @@ export default function App() {
               <h1 className="text-xl font-bold tracking-tight">Filament tracker</h1>
             </div>
           </div>
-          <button 
-            onClick={() => openModal()}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all active:scale-95 shadow-md shadow-emerald-100"
-          >
-            <Plus size={20} />
-            <span className="hidden sm:inline">Voeg spoel toe</span>
-          </button>
+          <div className="flex items-center gap-3">
+            {user ? (
+              <div className="flex items-center gap-3">
+                <div className="hidden sm:flex flex-col items-end">
+                  <span className="text-xs font-bold text-gray-900">{user.displayName}</span>
+                  <button onClick={handleLogout} className="text-[10px] font-bold text-red-500 hover:text-red-600 uppercase tracking-wider">Uitloggen</button>
+                </div>
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt={user.displayName || ''} className="w-10 h-10 rounded-xl border border-gray-200" />
+                ) : (
+                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">
+                    <User size={20} />
+                  </div>
+                )}
+                <button 
+                  onClick={() => openModal()}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all active:scale-95 shadow-md shadow-emerald-100"
+                >
+                  <Plus size={20} />
+                  <span className="hidden sm:inline">Voeg spoel toe</span>
+                </button>
+                <button onClick={handleLogout} className="sm:hidden p-2 text-gray-400 hover:text-red-500">
+                  <LogOut size={20} />
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={handleLogin}
+                className="bg-white border border-gray-200 hover:border-emerald-500 text-gray-700 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all active:scale-95 shadow-sm"
+              >
+                <LogIn size={20} className="text-emerald-600" />
+                <span>Inloggen</span>
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-        {/* Filters & Search */}
+        {!isAuthReady ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
+            <p className="text-gray-500 font-medium">Laden...</p>
+          </div>
+        ) : !user ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center text-emerald-600 mb-6">
+              <Disc size={40} />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Welkom bij Filament Tracker</h2>
+            <p className="text-gray-500 max-w-md mb-8">
+              Log in om je filament voorraad te beheren en te synchroniseren tussen al je apparaten.
+            </p>
+            <button 
+              onClick={handleLogin}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-3 transition-all active:scale-95 shadow-lg shadow-emerald-200"
+            >
+              <LogIn size={20} />
+              Inloggen met Google
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Filters & Search */}
         <div className="flex flex-col gap-4 mb-8">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
@@ -290,14 +371,17 @@ export default function App() {
           </AnimatePresence>
         </div>
 
-        {filteredFilaments.length === 0 && (
-          <div className="text-center py-20">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-              <Disc size={40} />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900">Geen filamenten gevonden</h3>
-            <p className="text-gray-500 mt-2">Pas je zoekopdracht aan of voeg een nieuwe spoel toe.</p>
-          </div>
+            {/* Empty State */}
+            {filteredFilaments.length === 0 && (
+              <div className="bg-white border border-dashed border-gray-300 rounded-3xl py-20 text-center">
+                <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-300 mx-auto mb-4">
+                  <Disc size={32} />
+                </div>
+                <p className="text-gray-500 font-medium">Geen spoelen gevonden</p>
+                <p className="text-sm text-gray-400">Pas je filters aan of voeg een nieuwe spoel toe.</p>
+              </div>
+            )}
+          </>
         )}
       </main>
 
@@ -511,7 +595,7 @@ export default function App() {
       {/* Version Number */}
       <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 text-center">
         <p className="text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em]">
-          Filament Tracker v1.1.7
+          Filament Tracker v1.2.0
         </p>
       </footer>
     </div>

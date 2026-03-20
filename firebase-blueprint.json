@@ -1,0 +1,28 @@
+{
+  "entities": {
+    "Filament": {
+      "title": "Filament",
+      "description": "A 3D printing filament spool in the inventory",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Document ID" },
+        "uid": { "type": "string", "description": "Owner User ID" },
+        "brand": { "type": "string" },
+        "type": { "type": "string" },
+        "colorName": { "type": "string" },
+        "colorHex": { "type": "string" },
+        "quantity": { "type": "number" },
+        "notes": { "type": "string" },
+        "lastUsed": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "brand", "type", "colorName", "colorHex", "quantity"]
+    }
+  },
+  "firestore": {
+    "/filaments/{filamentId}": {
+      "schema": "Filament",
+      "description": "User's filament inventory"
+    }
+  }
+}

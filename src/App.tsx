@@ -259,13 +259,6 @@ export default function App() {
                 Voorraad
                 {sortBy === 'quantity' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
               </button>
-              <button 
-                onClick={() => openModal()}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 h-[46px] rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-emerald-200 shrink-0"
-              >
-                <Plus size={20} />
-                <span className="hidden sm:inline">Voeg toe</span>
-              </button>
             </div>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
@@ -361,6 +354,20 @@ export default function App() {
                 </motion.div>
               );
             })}
+
+            {/* Add New Card */}
+            <motion.button
+              layout
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              onClick={() => openModal()}
+              className="group relative flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all min-h-[200px]"
+            >
+              <div className="w-12 h-12 bg-gray-50 group-hover:bg-emerald-100 rounded-full flex items-center justify-center text-gray-400 group-hover:text-emerald-600 transition-colors mb-3">
+                <Plus size={24} strokeWidth={3} />
+              </div>
+              <span className="text-sm font-bold text-gray-400 group-hover:text-emerald-600 transition-colors">Voeg toe</span>
+            </motion.button>
           </AnimatePresence>
         </div>
 
@@ -396,7 +403,7 @@ export default function App() {
               className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden"
             >
               <div className="p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
-                <h2 className="text-2xl font-bold mb-6">{editingId ? 'Spoel bewerken' : 'Voeg nieuwe spoel toe'}</h2>
+                <h2 className="text-2xl font-bold mb-6">{editingId ? 'Bewerken' : 'Voeg toe'}</h2>
                 
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="grid grid-cols-2 gap-4">
@@ -516,7 +523,7 @@ export default function App() {
                       type="submit"
                       className="flex-1 px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-100"
                     >
-                      {editingId ? 'Sla op' : 'Voeg spoel toe'}
+                      {editingId ? 'Bewaar' : 'Voeg toe'}
                     </button>
                   </div>
                 </form>
@@ -570,7 +577,7 @@ export default function App() {
       {/* Version Number */}
       <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 text-center">
         <p className="text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em]">
-          Filament Tracker v1.2.7
+          Filament Tracker v1.2.9
         </p>
       </footer>
     </div>

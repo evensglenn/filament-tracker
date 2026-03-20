@@ -13,7 +13,7 @@ export default function App() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<FilamentType | 'All'>('All');
+  const [filterType, setFilterType] = useState<string>('All');
   
   const [formData, setFormData] = useState<FilamentFormData>({
     brand: 'Bambu Lab',
@@ -96,7 +96,18 @@ export default function App() {
   const filteredFilaments = filaments.filter(f => {
     const matchesSearch = f.colorName.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          f.brand.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = filterType === 'All' || f.type === filterType;
+    
+    let matchesType = false;
+    if (filterType === 'All') {
+      matchesType = true;
+    } else if (filterType === 'PLA') {
+      matchesType = f.type.startsWith('PLA');
+    } else if (filterType === 'PETG') {
+      matchesType = f.type.startsWith('PETG');
+    } else if (filterType === 'Other') {
+      matchesType = f.type === 'Other' || f.type === 'TPU';
+    }
+
     return matchesSearch && matchesType;
   });
 
@@ -145,19 +156,13 @@ export default function App() {
             />
           </div>
           <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
-            <button 
-              onClick={() => setFilterType('All')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${filterType === 'All' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}
-            >
-              Alle
-            </button>
-            {TYPES.map(type => (
+            {['All', 'PLA', 'PETG', 'Other'].map(option => (
               <button 
-                key={type}
-                onClick={() => setFilterType(type)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${filterType === type ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}
+                key={option}
+                onClick={() => setFilterType(option)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${filterType === option ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'}`}
               >
-                {type}
+                {option === 'All' ? 'Alle' : option === 'Other' ? 'Overig' : option}
               </button>
             ))}
           </div>
@@ -465,7 +470,7 @@ export default function App() {
       {/* Version Number */}
       <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 text-center">
         <p className="text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em]">
-          Filament Tracker v1.0.8
+          Filament Tracker v1.0.9
         </p>
       </footer>
     </div>

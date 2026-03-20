@@ -463,6 +463,12 @@ export default function App() {
           </motion.div>
         </div>
       )}
+      {/* Version Number */}
+      <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 text-center">
+        <p className="text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em]">
+          Filament Tracker v1.0.2
+        </p>
+      </footer>
     </div>
   );
 }

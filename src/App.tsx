@@ -5,7 +5,7 @@ import { Filament, FilamentType, FilamentFormData } from './types';
 import { BAMBU_COLORS } from './constants';
 import { filamentService } from './services/filamentService';
 
-const TYPES: FilamentType[] = ['PLA', 'PLA Matte', 'PLA Glow', 'PETG', 'PETG Basic', 'PLA-CF', 'PETG-CF', 'TPU', 'Other'];
+const TYPES: FilamentType[] = ['PLA Basic', 'PLA Matte', 'PLA Glow', 'PETG-HF', 'PETG Basic', 'PLA-CF', 'PETG-CF', 'TPU', 'Other'];
 
 export default function App() {
   const [filaments, setFilaments] = useState<Filament[]>([]);
@@ -14,10 +14,11 @@ export default function App() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('All');
+  const [sortBy, setSortBy] = useState<'name' | 'quantity'>('name');
   
   const [formData, setFormData] = useState<FilamentFormData>({
     brand: 'Bambu Lab',
-    type: 'PLA',
+    type: 'PLA Basic',
     colorName: '',
     colorHex: '#000000',
     quantity: 1,
@@ -66,7 +67,7 @@ export default function App() {
       setEditingId(null);
       setFormData({
         brand: 'Bambu Lab',
-        type: 'PLA',
+        type: 'PLA Basic',
         colorName: '',
         colorHex: '#000000',
         quantity: 1,
@@ -93,23 +94,31 @@ export default function App() {
     loadFilaments();
   };
 
-  const filteredFilaments = filaments.filter(f => {
-    const matchesSearch = f.colorName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         f.brand.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    let matchesType = false;
-    if (filterType === 'All') {
-      matchesType = true;
-    } else if (filterType === 'PLA') {
-      matchesType = f.type.startsWith('PLA');
-    } else if (filterType === 'PETG') {
-      matchesType = f.type.startsWith('PETG');
-    } else if (filterType === 'Other') {
-      matchesType = f.type === 'Other' || f.type === 'TPU';
-    }
+  const filteredFilaments = filaments
+    .filter(f => {
+      const matchesSearch = f.colorName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                           f.brand.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      let matchesType = false;
+      if (filterType === 'All') {
+        matchesType = true;
+      } else if (filterType === 'PLA') {
+        matchesType = f.type.startsWith('PLA');
+      } else if (filterType === 'PETG') {
+        matchesType = f.type.startsWith('PETG');
+      } else if (filterType === 'Other') {
+        matchesType = f.type === 'Other' || f.type === 'TPU';
+      }
 
-    return matchesSearch && matchesType;
-  });
+      return matchesSearch && matchesType;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'name') {
+        return a.colorName.localeCompare(b.colorName);
+      } else {
+        return b.quantity - a.quantity;
+      }
+    });
 
   const getQuantityColor = (qty: number) => {
     if (qty < 0.25) return 'text-red-600 bg-red-50';
@@ -144,16 +153,32 @@ export default function App() {
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         {/* Filters & Search */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="Zoek op kleur of merk..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-            />
+        <div className="flex flex-col gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input 
+                type="text" 
+                placeholder="Zoek op kleur of merk..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              />
+            </div>
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-1 self-start sm:self-auto">
+              <button 
+                onClick={() => setSortBy('name')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${sortBy === 'name' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
+              >
+                Naam
+              </button>
+              <button 
+                onClick={() => setSortBy('quantity')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${sortBy === 'quantity' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
+              >
+                Voorraad
+              </button>
+            </div>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
             {['All', 'PLA', 'PETG', 'Other'].map(option => (
@@ -182,25 +207,27 @@ export default function App() {
                   className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all group"
                 >
                   <div className="p-5">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-center gap-3">
+                    <div className="flex justify-between items-start mb-4 gap-2">
+                      <div className="flex items-center gap-3 min-w-0">
                         <div 
-                          className="w-12 h-12 rounded-full border-4 border-gray-50 shadow-inner"
+                          className="w-12 h-12 rounded-full border-4 border-gray-50 shadow-inner shrink-0"
                           style={{ backgroundColor: filament.colorHex }}
                         />
-                        <div>
-                          <h3 className="font-bold text-lg leading-tight">{filament.colorName}</h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs font-bold px-2 py-0.5 bg-gray-100 text-gray-600 rounded uppercase tracking-wider">
+                        <div className="min-w-0">
+                          <h3 className="font-bold text-lg leading-tight truncate" title={filament.colorName}>
+                            {filament.colorName.split(' (')[0]}
+                          </h3>
+                          <div className="mt-1">
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded uppercase tracking-wider inline-block">
                               {filament.type}
                             </span>
-                            <span className="text-xs text-gray-400 font-medium">
-                              {filament.brand}
-                            </span>
                           </div>
+                          <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest mt-0.5 truncate">
+                            {filament.brand}
+                          </p>
                         </div>
                       </div>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={() => openModal(filament)}
                           className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
@@ -470,7 +497,7 @@ export default function App() {
       {/* Version Number */}
       <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 text-center">
         <p className="text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em]">
-          Filament Tracker v1.0.9
+          Filament Tracker v1.1.3
         </p>
       </footer>
     </div>

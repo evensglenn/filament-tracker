@@ -6,7 +6,7 @@ export interface ColorPreset {
 }
 
 export const BAMBU_COLORS: Record<string, ColorPreset[]> = {
-  'PLA': [
+  'PLA Basic': [
     { name: 'Jade White', hex: '#F5F5F5' },
     { name: 'Black', hex: '#1A1A1A' },
     { name: 'Grey', hex: '#808080' },
@@ -49,7 +49,7 @@ export const BAMBU_COLORS: Record<string, ColorPreset[]> = {
     { name: 'Glow Green', hex: '#CCFF00' },
     { name: 'Glow Blue', hex: '#00FFFF' },
   ],
-  'PETG': [
+  'PETG-HF': [
     { name: 'White', hex: '#FFFFFF' },
     { name: 'Black', hex: '#000000' },
     { name: 'Grey', hex: '#808080' },

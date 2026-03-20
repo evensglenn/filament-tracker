@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Disc, Scale, Droplets, ChevronRight, Search, Filter, AlertCircle, Check } from 'lucide-react';
+import { Plus, Trash2, Edit2, Disc, Scale, Droplets, ChevronRight, Search, Filter, AlertCircle, Check, ArrowUp, ArrowDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Filament, FilamentType, FilamentFormData } from './types';
 import { BAMBU_COLORS } from './constants';
@@ -15,6 +15,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('All');
   const [sortBy, setSortBy] = useState<'name' | 'quantity'>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
   const [formData, setFormData] = useState<FilamentFormData>({
     brand: 'Bambu Lab',
@@ -94,6 +95,15 @@ export default function App() {
     loadFilaments();
   };
 
+  const handleSort = (field: 'name' | 'quantity') => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder(field === 'name' ? 'asc' : 'desc'); // Default to desc for quantity
+    }
+  };
+
   const filteredFilaments = filaments
     .filter(f => {
       const matchesSearch = f.colorName.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -113,11 +123,13 @@ export default function App() {
       return matchesSearch && matchesType;
     })
     .sort((a, b) => {
+      let comparison = 0;
       if (sortBy === 'name') {
-        return a.colorName.localeCompare(b.colorName);
+        comparison = a.colorName.localeCompare(b.colorName);
       } else {
-        return b.quantity - a.quantity;
+        comparison = a.quantity - b.quantity;
       }
+      return sortOrder === 'asc' ? comparison : -comparison;
     });
 
   const getQuantityColor = (qty: number) => {
@@ -165,18 +177,20 @@ export default function App() {
                 className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
               />
             </div>
-            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-1 self-start sm:self-auto">
+            <div className="flex items-center bg-gray-100 rounded-xl p-1 self-start sm:self-auto">
               <button 
-                onClick={() => setSortBy('name')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${sortBy === 'name' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
+                onClick={() => handleSort('name')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${sortBy === 'name' ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 Naam
+                {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
               </button>
               <button 
-                onClick={() => setSortBy('quantity')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${sortBy === 'quantity' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
+                onClick={() => handleSort('quantity')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${sortBy === 'quantity' ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 Voorraad
+                {sortBy === 'quantity' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
               </button>
             </div>
           </div>
@@ -497,7 +511,7 @@ export default function App() {
       {/* Version Number */}
       <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 text-center">
         <p className="text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em]">
-          Filament Tracker v1.1.5
+          Filament Tracker v1.1.6
         </p>
       </footer>
     </div>

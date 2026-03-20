@@ -196,13 +196,6 @@ export default function App() {
                     <User size={20} />
                   </div>
                 )}
-                <button 
-                  onClick={() => openModal()}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all active:scale-95 shadow-md shadow-emerald-100"
-                >
-                  <Plus size={20} />
-                  <span className="hidden sm:inline">Voeg spoel toe</span>
-                </button>
                 <button onClick={handleLogout} className="sm:hidden p-2 text-gray-400 hover:text-red-500">
                   <LogOut size={20} />
                 </button>
@@ -247,7 +240,7 @@ export default function App() {
           <>
             {/* Filters & Search */}
         <div className="flex flex-col gap-4 mb-8">
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input 
@@ -255,23 +248,32 @@ export default function App() {
                 placeholder="Zoek op kleur of merk..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm"
               />
             </div>
-            <div className="flex items-center bg-white border border-gray-200 rounded-xl p-1 self-start sm:self-auto shadow-sm">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
+                <button 
+                  onClick={() => handleSort('name')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${sortBy === 'name' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
+                >
+                  Naam
+                  {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+                </button>
+                <button 
+                  onClick={() => handleSort('quantity')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${sortBy === 'quantity' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
+                >
+                  Voorraad
+                  {sortBy === 'quantity' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+                </button>
+              </div>
               <button 
-                onClick={() => handleSort('name')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${sortBy === 'name' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
+                onClick={() => openModal()}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-emerald-200 shrink-0"
               >
-                Naam
-                {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
-              </button>
-              <button 
-                onClick={() => handleSort('quantity')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${sortBy === 'quantity' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
-              >
-                Voorraad
-                {sortBy === 'quantity' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+                <Plus size={20} />
+                <span className="hidden sm:inline">Voeg toe</span>
               </button>
             </div>
           </div>
@@ -595,7 +597,7 @@ export default function App() {
       {/* Version Number */}
       <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 text-center">
         <p className="text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em]">
-          Filament Tracker v1.2.0
+          Filament Tracker v1.2.1
         </p>
       </footer>
     </div>

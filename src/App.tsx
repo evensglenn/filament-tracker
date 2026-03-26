@@ -9,6 +9,32 @@ import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User 
 
 const TYPES: FilamentType[] = ['PLA Basic', 'PLA Matte', 'PLA Glow', 'PETG-HF', 'PETG Basic', 'PLA-CF', 'PETG-CF', 'TPU', 'Other'];
 
+const getHue = (hex: string) => {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const d = max - min;
+  const l = (max + min) / 2;
+  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+
+  // Achromatic colors (Black, Gray, White)
+  if (s < 0.15) {
+    // Sort by lightness: Black (0) -> Gray (0.5) -> White (1)
+    return l; 
+  }
+
+  let h = 0;
+  if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+  else if (max === g) h = (b - r) / d + 2;
+  else if (max === b) h = (r - g) / d + 4;
+
+  // Offset chromatic colors so they come after achromatic ones in the spectrum
+  return (h / 6) + 2;
+};
+
 export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
@@ -18,7 +44,7 @@ export default function App() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('All');
-  const [sortBy, setSortBy] = useState<'name' | 'quantity'>('name');
+  const [sortBy, setSortBy] = useState<'name' | 'quantity' | 'color'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
@@ -124,12 +150,12 @@ export default function App() {
     notes: ''
   });
 
-  const handleSort = (field: 'name' | 'quantity') => {
+  const handleSort = (field: 'name' | 'quantity' | 'color') => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
       setSortBy(field);
-      setSortOrder(field === 'name' ? 'asc' : 'desc'); // Default to desc for quantity
+      setSortOrder(field === 'quantity' ? 'desc' : 'asc'); // Default to desc for quantity
     }
   };
 
@@ -155,6 +181,8 @@ export default function App() {
       let comparison = 0;
       if (sortBy === 'name') {
         comparison = a.colorName.localeCompare(b.colorName);
+      } else if (sortBy === 'color') {
+        comparison = getHue(a.colorHex) - getHue(b.colorHex);
       } else {
         comparison = a.quantity - b.quantity;
       }
@@ -251,6 +279,13 @@ export default function App() {
               >
                 Naam
                 {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+              </button>
+              <button 
+                onClick={() => handleSort('color')}
+                className={`px-4 h-[46px] rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border ${sortBy === 'color' ? 'bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-200' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-900 hover:bg-gray-50'}`}
+              >
+                Kleur
+                {sortBy === 'color' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
               </button>
               <button 
                 onClick={() => handleSort('quantity')}
@@ -357,8 +392,10 @@ export default function App() {
 
             {filteredFilaments.length === 0 && filaments.length > 0 && (
               <motion.div 
+                key="no-results"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 className="col-span-full py-12 text-center"
               >
                 <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-300 mx-auto mb-4">

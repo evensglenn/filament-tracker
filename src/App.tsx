@@ -312,16 +312,9 @@ export default function App() {
               <h1 className="text-xl font-bold tracking-tight">Filament tracker</h1>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            {user && (
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => setIsShareModalOpen(true)}
-                  className="p-2.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all active:scale-95"
-                  title="Delen met anderen"
-                >
-                  <UserPlus size={20} />
-                </button>
+          <div className="flex items-center gap-2">
+            {user ? (
+              <>
                 <button 
                   onClick={() => setIsQuickAddOpen(true)}
                   className="p-2.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all active:scale-95"
@@ -329,29 +322,26 @@ export default function App() {
                 >
                   <PackagePlus size={20} />
                 </button>
-              </div>
-            )}
-            {user ? (
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  {user.photoURL && (
-                    <img 
-                      src={user.photoURL} 
-                      alt={user.displayName || 'User'} 
-                      className="w-8 h-8 rounded-full border border-gray-200"
-                      referrerPolicy="no-referrer"
-                    />
+                <button 
+                  onClick={() => setIsShareModalOpen(true)}
+                  className="p-2.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all active:scale-95 relative"
+                  title="Delen met anderen"
+                >
+                  <UserPlus size={20} />
+                  {sharedEmails.length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-600 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white">
+                      {sharedEmails.length}
+                    </span>
                   )}
-                  <span className="text-xs font-bold text-gray-900">{user.displayName}</span>
-                </div>
+                </button>
                 <button 
                   onClick={handleLogout} 
-                  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                  className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all active:scale-95"
                   title="Uitloggen"
                 >
                   <LogOut size={20} />
                 </button>
-              </div>
+              </>
             ) : (
               <button 
                 onClick={handleLogin}
@@ -388,43 +378,8 @@ export default function App() {
               Inloggen met Google
             </button>
           </div>
-        ) : (
+          ) : (
           <>
-            {/* Stock Overview */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white border border-gray-200 rounded-2xl p-6 mb-8 flex items-center justify-between shadow-sm overflow-hidden relative"
-            >
-              <div className="relative z-10">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Totale Voorraad</p>
-                <div className="flex items-baseline gap-2">
-                  <h2 className="text-4xl font-black text-gray-900">
-                    {filaments.reduce((acc, f) => acc + f.quantity, 0).toFixed(1)}
-                  </h2>
-                  <span className="text-lg font-bold text-gray-400">rollen</span>
-                </div>
-              </div>
-              <div className="relative z-10 flex -space-x-3">
-                {filaments.slice(0, 5).map((f, i) => (
-                  <div 
-                    key={f.id} 
-                    className="w-12 h-12 rounded-full border-4 border-white shadow-md flex items-center justify-center"
-                    style={{ backgroundColor: f.colorHex, zIndex: 5 - i }}
-                  >
-                    <Disc size={20} className="text-white/30" />
-                  </div>
-                ))}
-                {filaments.length > 5 && (
-                  <div className="w-12 h-12 rounded-full border-4 border-white bg-gray-100 shadow-md flex items-center justify-center text-xs font-bold text-gray-500 z-0">
-                    +{filaments.length - 5}
-                  </div>
-                )}
-              </div>
-              {/* Decorative background element */}
-              <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-emerald-50 rounded-full blur-3xl opacity-50" />
-            </motion.div>
-
             {/* Filters & Search */}
         <div className="flex flex-col gap-4 mb-8">
           <div className="flex flex-col md:flex-row gap-4">
@@ -460,27 +415,52 @@ export default function App() {
                 Voorraad
                 {sortBy === 'quantity' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
               </button>
-              <div className="w-px h-8 bg-gray-200 mx-1 shrink-0" />
-              <button 
-                onClick={() => setIsShareViewOpen(true)}
-                className="px-4 h-[46px] rounded-xl text-sm font-bold transition-all flex items-center gap-2 bg-white border border-gray-200 text-gray-500 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 shadow-sm shrink-0"
-                title="Deel gefilterd overzicht"
-              >
-                <Share2 size={18} />
-                <span className="hidden sm:inline">Delen</span>
-              </button>
             </div>
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
-            {['All', 'PLA', 'PETG'].map(option => (
-              <button 
-                key={option}
-                onClick={() => setFilterType(option)}
-                className={`px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all border ${filterType === option ? 'bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-200' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-900 hover:bg-gray-50'}`}
-              >
-                {option === 'All' ? 'Alle' : option}
-              </button>
-            ))}
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
+              {['All', 'PLA', 'PETG'].map(option => (
+                <button 
+                  key={option}
+                  onClick={() => setFilterType(option)}
+                  className={`px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all border ${filterType === option ? 'bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-200' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-900 hover:bg-gray-50'}`}
+                >
+                  {option === 'All' ? 'Alle' : option}
+                </button>
+              ))}
+            </div>
+            
+            <motion.button 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              key={`${filterType}-${searchQuery}`}
+              onClick={() => setIsShareViewOpen(true)}
+              className="flex items-center gap-3 shrink-0 cursor-pointer hover:opacity-70 transition-opacity"
+              title="Deel dit overzicht"
+            >
+              <div className="flex -space-x-2.5">
+                {filteredFilaments.slice(0, 5).map((f, i) => (
+                  <div 
+                    key={f.id} 
+                    className="w-8 h-8 rounded-full border-2 border-white shadow-sm flex items-center justify-center"
+                    style={{ backgroundColor: f.colorHex, zIndex: 5 - i }}
+                  >
+                    <Disc size={12} className="text-white/20" />
+                  </div>
+                ))}
+                {filteredFilaments.length > 5 && (
+                  <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-50 flex items-center justify-center text-[9px] font-black text-gray-400 z-0 shadow-sm">
+                    +{filteredFilaments.length - 5}
+                  </div>
+                )}
+              </div>
+              <div className="flex items-baseline gap-1 ml-1">
+                <span className="text-lg font-black text-gray-900">
+                  {filteredFilaments.reduce((acc, f) => acc + f.quantity, 0).toFixed(1)}
+                </span>
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">rollen</span>
+              </div>
+            </motion.button>
           </div>
         </div>
 
@@ -573,18 +553,26 @@ export default function App() {
                 <p className="text-gray-500 font-bold">Geen resultaten gevonden</p>
                 <p className="text-sm text-gray-400 mt-1">Probeer een andere zoekterm of filter.</p>
                 {(searchQuery || filterType !== 'All') && (
-                  <button 
-                    onClick={() => { setSearchQuery(''); setFilterType('All'); }}
-                    className="mt-4 text-emerald-600 font-bold text-sm hover:underline"
-                  >
-                    Wis alle filters
-                  </button>
+                  <div className="mt-6 flex flex-col items-center gap-2">
+                    <button 
+                      onClick={() => { setSearchQuery(''); setFilterType('All'); }}
+                      className="text-emerald-600 font-bold text-sm hover:underline py-1"
+                    >
+                      Wis alle filters
+                    </button>
+                    <button 
+                      onClick={() => openModal()}
+                      className="text-emerald-600 font-bold text-sm hover:underline py-1"
+                    >
+                      Voeg filament toe
+                    </button>
+                  </div>
                 )}
               </motion.div>
             )}
 
             {/* Add New Card */}
-            {true && (
+            {(filteredFilaments.length > 0 || filaments.length === 0) && (
               <motion.button
                 layout
                 initial={{ opacity: 0, scale: 0.9 }}

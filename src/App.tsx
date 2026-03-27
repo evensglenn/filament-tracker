@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Minus, Trash2, Edit2, Disc, Search, Filter, AlertCircle, Check, ArrowUp, ArrowDown, LogOut, LogIn, User, LayoutGrid, X, Share2, PackagePlus, UserPlus, Mail, ShieldAlert } from 'lucide-react';
+import { Plus, Minus, Trash2, Edit2, Disc, Search, Filter, AlertCircle, Check, ArrowUp, ArrowDown, LogOut, LogIn, User, LayoutGrid, X, Share2, PackagePlus, UserPlus, Mail, ShieldAlert, Lock } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'motion/react';
 import { Filament, FilamentType, FilamentFormData } from './types';
 import { BAMBU_COLORS } from './constants';
@@ -487,8 +487,12 @@ export default function App() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   key={filament.id}
-                  onClick={() => openModal(filament)}
-                  className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all group cursor-pointer flex"
+                  onClick={() => {
+                    if (user && filament.uid === user.uid) {
+                      openModal(filament);
+                    }
+                  }}
+                  className={`bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all group flex ${user && filament.uid === user.uid ? 'cursor-pointer' : 'cursor-default'}`}
                 >
                   <div className="flex-1 p-4 min-w-0">
                     <div className="flex items-center gap-3 min-w-0">
@@ -505,9 +509,12 @@ export default function App() {
                             {filament.type}
                           </span>
                           {user && filament.uid !== user.uid && (
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded uppercase tracking-wider inline-block">
-                              {filament.ownerName || 'Gedeeld'}
-                            </span>
+                            <div className="flex items-center gap-1">
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded uppercase tracking-wider inline-block">
+                                {filament.ownerName || 'Gedeeld'}
+                              </span>
+                              <Lock size={10} className="text-gray-400" />
+                            </div>
                           )}
                         </div>
                         <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest mt-0.5 truncate">

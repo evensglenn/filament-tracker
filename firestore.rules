@@ -102,9 +102,9 @@ service cloud.firestore {
                       isValidFilament(request.resource.data) && 
                       request.resource.data.uid == request.auth.uid;
       
-      // Users can update their own filaments or those shared with them
+      // Users can only update their own filaments (or admin)
       allow update: if isAuthenticated() && 
-                      (isDocOwner() || isSharedWith(resource.data.uid) || isAdmin()) && 
+                      (isDocOwner() || isAdmin()) && 
                       isValidFilament(request.resource.data) && 
                       request.resource.data.uid == resource.data.uid;
       

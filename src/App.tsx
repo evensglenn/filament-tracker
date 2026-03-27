@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Disc, ChevronRight, Search, Filter, AlertCircle, Check, ArrowUp, ArrowDown, LogOut, LogIn, User } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { Plus, Minus, Trash2, Edit2, Disc, Search, Filter, AlertCircle, Check, ArrowUp, ArrowDown, LogOut, LogIn, User, LayoutGrid, X, Share2, PackagePlus } from 'lucide-react';
+import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'motion/react';
 import { Filament, FilamentType, FilamentFormData } from './types';
 import { BAMBU_COLORS } from './constants';
 import { filamentService } from './services/filamentService';
 import { auth } from './firebase';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 
-const TYPES: FilamentType[] = ['PLA Basic', 'PLA Matte', 'PLA Glow', 'PETG-HF', 'PETG Basic', 'PLA-CF', 'PETG-CF', 'TPU', 'Other'];
+const TYPES: FilamentType[] = ['PLA Basic', 'PLA Matte', 'PLA Glow', 'PETG-HF', 'PETG Basic', 'PLA-CF', 'PETG-CF', 'TPU'];
 
 const getHue = (hex: string) => {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
@@ -46,6 +46,20 @@ export default function App() {
   const [filterType, setFilterType] = useState<string>('All');
   const [sortBy, setSortBy] = useState<'name' | 'quantity' | 'color'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [isShareViewOpen, setIsShareViewOpen] = useState(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [deliveryQuantities, setDeliveryQuantities] = useState<Record<string, number>>({});
+  const [showHeader, setShowHeader] = useState(true);
+  const { scrollY } = useScroll();
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const previous = scrollY.getPrevious() || 0;
+    if (latest > previous && latest > 150) {
+      setShowHeader(false);
+    } else {
+      setShowHeader(true);
+    }
+  });
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
@@ -141,6 +155,29 @@ export default function App() {
     });
   };
 
+  const handleConfirmDelivery = async () => {
+    const updates = Object.entries(deliveryQuantities).filter(([_, qty]) => (qty as number) > 0);
+    if (updates.length === 0) {
+      setIsQuickAddOpen(false);
+      return;
+    }
+
+    try {
+      for (const [id, qty] of updates) {
+        const filament = filaments.find(f => f.id === id);
+        if (filament) {
+          await filamentService.updateFilament(id, {
+            quantity: filament.quantity + (qty as number)
+          });
+        }
+      }
+      setDeliveryQuantities({});
+      setIsQuickAddOpen(false);
+    } catch (error) {
+      console.error('Failed to confirm delivery:', error);
+    }
+  };
+
   const [formData, setFormData] = useState<FilamentFormData>({
     brand: 'Bambu Lab',
     type: 'PLA Basic',
@@ -200,7 +237,15 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F9FAFB] text-[#111827] font-sans">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <motion.header 
+        variants={{
+          visible: { y: 0 },
+          hidden: { y: "-100%" },
+        }}
+        animate={showHeader ? "visible" : "hidden"}
+        transition={{ duration: 0.35, ease: "easeInOut" }}
+        className="bg-white border-b border-gray-200 sticky top-0 z-40"
+      >
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-200">
@@ -211,13 +256,33 @@ export default function App() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {user && (
+              <button 
+                onClick={() => setIsQuickAddOpen(true)}
+                className="p-2.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all active:scale-95"
+                title="Snel toevoegen"
+              >
+                <PackagePlus size={20} />
+              </button>
+            )}
             {user ? (
               <div className="flex items-center gap-3">
-                <div className="flex flex-col items-end">
+                <div className="flex items-center gap-2">
+                  {user.photoURL && (
+                    <img 
+                      src={user.photoURL} 
+                      alt={user.displayName || 'User'} 
+                      className="w-8 h-8 rounded-full border border-gray-200"
+                      referrerPolicy="no-referrer"
+                    />
+                  )}
                   <span className="text-xs font-bold text-gray-900">{user.displayName}</span>
-                  <button onClick={handleLogout} className="text-[10px] font-bold text-red-500 hover:text-red-600 uppercase tracking-wider">Uitloggen</button>
                 </div>
-                <button onClick={handleLogout} className="sm:hidden p-2 text-gray-400 hover:text-red-500">
+                <button 
+                  onClick={handleLogout} 
+                  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                  title="Uitloggen"
+                >
                   <LogOut size={20} />
                 </button>
               </div>
@@ -232,7 +297,7 @@ export default function App() {
             )}
           </div>
         </div>
-      </header>
+      </motion.header>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         {!isAuthReady ? (
@@ -307,38 +372,47 @@ export default function App() {
                 className="w-full h-[46px] pl-10 pr-4 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm font-medium"
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
               <button 
                 onClick={() => handleSort('name')}
-                className={`px-4 h-[46px] rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border ${sortBy === 'name' ? 'bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-200' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-900 hover:bg-gray-50'}`}
+                className={`px-4 h-[46px] rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border shrink-0 ${sortBy === 'name' ? 'bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-200' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-900 hover:bg-gray-50'}`}
               >
                 Naam
                 {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
               </button>
               <button 
                 onClick={() => handleSort('color')}
-                className={`px-4 h-[46px] rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border ${sortBy === 'color' ? 'bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-200' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-900 hover:bg-gray-50'}`}
+                className={`px-4 h-[46px] rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border shrink-0 ${sortBy === 'color' ? 'bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-200' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-900 hover:bg-gray-50'}`}
               >
                 Kleur
                 {sortBy === 'color' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
               </button>
               <button 
                 onClick={() => handleSort('quantity')}
-                className={`px-4 h-[46px] rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border ${sortBy === 'quantity' ? 'bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-200' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-900 hover:bg-gray-50'}`}
+                className={`px-4 h-[46px] rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border shrink-0 ${sortBy === 'quantity' ? 'bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-200' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-900 hover:bg-gray-50'}`}
               >
                 Voorraad
                 {sortBy === 'quantity' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
               </button>
+              <div className="w-px h-8 bg-gray-200 mx-1 shrink-0" />
+              <button 
+                onClick={() => setIsShareViewOpen(true)}
+                className="px-4 h-[46px] rounded-xl text-sm font-bold transition-all flex items-center gap-2 bg-white border border-gray-200 text-gray-500 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 shadow-sm shrink-0"
+                title="Deel gefilterd overzicht"
+              >
+                <Share2 size={18} />
+                <span className="hidden sm:inline">Delen</span>
+              </button>
             </div>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
-            {['All', 'PLA', 'PETG', 'Other'].map(option => (
+            {['All', 'PLA', 'PETG'].map(option => (
               <button 
                 key={option}
                 onClick={() => setFilterType(option)}
                 className={`px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all border ${filterType === option ? 'bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-200' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-900 hover:bg-gray-50'}`}
               >
-                {option === 'All' ? 'Alle' : option === 'Other' ? 'Overig' : option}
+                {option === 'All' ? 'Alle' : option}
               </button>
             ))}
           </div>
@@ -401,17 +475,6 @@ export default function App() {
                           <span className="text-xs font-bold uppercase tracking-wider">Voorraad</span>
                         </div>
                         <p className="text-3xl font-black">{filament.quantity} <span className="text-lg font-bold">{filament.quantity === 1 ? 'rol' : 'rollen'}</span></p>
-                        
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            incrementQuantity(filament);
-                          }}
-                          className="absolute -right-2 -top-2 w-10 h-10 bg-white border border-gray-200 text-emerald-600 rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all md:opacity-0 md:group-hover/qty:opacity-100"
-                          title="+1 rol toevoegen"
-                        >
-                          <Plus size={24} strokeWidth={3} />
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -473,7 +536,7 @@ export default function App() {
       {/* Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -488,7 +551,7 @@ export default function App() {
               className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden"
             >
               <div className="p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
-                <h2 className="text-2xl font-bold mb-6">{editingId ? 'Bewerken' : 'Voeg toe'}</h2>
+                <h2 className="text-2xl font-bold mb-6">{editingId ? 'Bewerk' : 'Voeg toe'}</h2>
                 
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="grid grid-cols-2 gap-4">
@@ -621,7 +684,7 @@ export default function App() {
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {deleteId !== null && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -659,10 +722,172 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* Share View Modal */}
+      <AnimatePresence>
+        {isShareViewOpen && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsShareViewOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+            >
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-emerald-600 text-white">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                    <LayoutGrid size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold leading-tight">Overzicht</h2>
+                  </div>
+                </div>
+                <button onClick={() => setIsShareViewOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="p-6 overflow-y-auto flex-1 bg-gray-50">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                  {filteredFilaments.map(f => (
+                    <div key={f.id} className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center text-center gap-2">
+                      <div 
+                        className="w-10 h-10 rounded-full border-2 border-gray-100 shadow-inner"
+                        style={{ backgroundColor: f.colorHex }}
+                      />
+                      <div className="min-w-0 w-full">
+                        <p className="text-[10px] font-black text-gray-900 truncate leading-tight uppercase tracking-tighter">
+                          {f.colorName}
+                        </p>
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                          {f.type}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Quick Add Modal */}
+      <AnimatePresence>
+        {isQuickAddOpen && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setIsQuickAddOpen(false);
+                setDeliveryQuantities({});
+              }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+            >
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-emerald-600 text-white">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                    <PackagePlus size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold leading-tight">Nieuwe levering</h2>
+                  </div>
+                </div>
+                <button onClick={() => {
+                  setIsQuickAddOpen(false);
+                  setDeliveryQuantities({});
+                }} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="p-6 overflow-y-auto flex-1 bg-gray-50">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                  {filaments.map(f => {
+                    const pendingQty = deliveryQuantities[f.id] || 0;
+                    return (
+                      <div key={f.id} className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center text-center gap-2 relative group">
+                        <div 
+                          className="w-10 h-10 rounded-full border-2 border-gray-100 shadow-inner"
+                          style={{ backgroundColor: f.colorHex }}
+                        />
+                        <div className="min-w-0 w-full">
+                          <p className="text-[10px] font-black text-gray-900 truncate leading-tight uppercase tracking-tighter">
+                            {f.colorName}
+                          </p>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                            {f.type}
+                          </p>
+                          <p className="text-[10px] font-bold text-gray-400 mt-1">
+                            Huidig: {f.quantity}
+                          </p>
+                          
+                          <div className="mt-2 flex items-center justify-center gap-3">
+                            <button 
+                              onClick={() => setDeliveryQuantities(prev => ({ ...prev, [f.id]: Math.max(0, (prev[f.id] || 0) - 1) }))}
+                              disabled={pendingQty === 0}
+                              className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${pendingQty > 0 ? 'border-red-200 text-red-600 hover:bg-red-50 active:scale-90' : 'border-gray-100 text-gray-300 cursor-not-allowed'}`}
+                            >
+                              <Minus size={16} strokeWidth={3} />
+                            </button>
+                            <span className={`text-lg font-black w-6 ${pendingQty > 0 ? 'text-emerald-600' : 'text-gray-300'}`}>
+                              {pendingQty}
+                            </span>
+                            <button 
+                              onClick={() => setDeliveryQuantities(prev => ({ ...prev, [f.id]: (prev[f.id] || 0) + 1 }))}
+                              className="w-8 h-8 rounded-full flex items-center justify-center border border-emerald-200 text-emerald-600 hover:bg-emerald-50 active:scale-90 transition-all"
+                            >
+                              <Plus size={16} strokeWidth={3} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="p-4 bg-white border-t border-gray-100 flex gap-3">
+                <button 
+                  onClick={() => {
+                    setIsQuickAddOpen(false);
+                    setDeliveryQuantities({});
+                  }}
+                  className="flex-1 px-6 py-3 border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition-all active:scale-95"
+                >
+                  Annuleer
+                </button>
+                <button 
+                  onClick={handleConfirmDelivery}
+                  disabled={Object.values(deliveryQuantities).every(v => (v as number) === 0)}
+                  className="flex-[2] px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-100 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed"
+                >
+                  Bewaar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Version Number */}
       <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 text-center">
         <p className="text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em]">
-          Filament Tracker v1.9.0
+          Filament Tracker v1.17.0
         </p>
       </footer>
     </div>

@@ -17,12 +17,28 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "brand", "type", "colorName", "colorHex", "quantity"]
+    },
+    "Share": {
+      "title": "Share",
+      "description": "List of emails that have access to a user's inventory",
+      "type": "object",
+      "properties": {
+        "emails": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["emails"]
     }
   },
   "firestore": {
     "/filaments/{filamentId}": {
       "schema": "Filament",
       "description": "User's filament inventory"
+    },
+    "/shares/{ownerUid}": {
+      "schema": "Share",
+      "description": "Sharing settings for a user"
     }
   }
 }

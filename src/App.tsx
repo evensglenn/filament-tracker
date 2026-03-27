@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Minus, Trash2, Edit2, Disc, Search, Filter, AlertCircle, Check, ArrowUp, ArrowDown, LogOut, LogIn, User, LayoutGrid, X, Share2, PackagePlus } from 'lucide-react';
+import { Plus, Minus, Trash2, Edit2, Disc, Search, Filter, AlertCircle, Check, ArrowUp, ArrowDown, LogOut, LogIn, User, LayoutGrid, X, Share2, PackagePlus, UserPlus, Mail, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'motion/react';
 import { Filament, FilamentType, FilamentFormData } from './types';
 import { BAMBU_COLORS } from './constants';
@@ -39,6 +39,7 @@ export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [filaments, setFilaments] = useState<Filament[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -48,6 +49,9 @@ export default function App() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [isShareViewOpen, setIsShareViewOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [sharedEmails, setSharedEmails] = useState<string[]>([]);
+  const [newShareEmail, setNewShareEmail] = useState('');
   const [deliveryQuantities, setDeliveryQuantities] = useState<Record<string, number>>({});
   const [showHeader, setShowHeader] = useState(true);
   const { scrollY } = useScroll();
@@ -77,10 +81,28 @@ export default function App() {
 
     const unsubscribeFilaments = filamentService.subscribeToFilaments((data) => {
       setFilaments(data);
+      setError(null);
+    }, (err: any) => {
+      try {
+        const parsed = JSON.parse(err.message);
+        if (parsed.error?.includes("insufficient permissions")) {
+          setError("Je hebt geen toestemming om deze gegevens te bekijken.");
+        } else {
+          setError("Er is iets misgegaan bij het ophalen van de gegevens.");
+        }
+      } catch {
+        setError("Er is iets misgegaan.");
+      }
     });
 
     return () => unsubscribeFilaments();
   }, [isAuthReady, user]);
+
+  useEffect(() => {
+    if (user) {
+      filamentService.getShares().then(setSharedEmails);
+    }
+  }, [user]);
 
   const handleLogin = async () => {
     const provider = new GoogleAuthProvider();
@@ -97,6 +119,21 @@ export default function App() {
     } catch (error) {
       console.error('Logout failed:', error);
     }
+  };
+
+  const handleAddShare = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newShareEmail || sharedEmails.includes(newShareEmail)) return;
+    const updated = [...sharedEmails, newShareEmail];
+    setSharedEmails(updated);
+    setNewShareEmail('');
+    await filamentService.updateShares(updated);
+  };
+
+  const handleRemoveShare = async (email: string) => {
+    const updated = sharedEmails.filter(e => e !== email);
+    setSharedEmails(updated);
+    await filamentService.updateShares(updated);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -234,6 +271,26 @@ export default function App() {
 
   const presets = BAMBU_COLORS[formData.type] || [];
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 text-center">
+          <div className="w-16 h-16 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <ShieldAlert size={32} />
+          </div>
+          <h2 className="text-2xl font-bold mb-4">Oeps!</h2>
+          <p className="text-gray-600 mb-8">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all active:scale-95"
+          >
+            Probeer opnieuw
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F9FAFB] text-[#111827] font-sans">
       {/* Header */}
@@ -257,13 +314,22 @@ export default function App() {
           </div>
           <div className="flex items-center gap-3">
             {user && (
-              <button 
-                onClick={() => setIsQuickAddOpen(true)}
-                className="p-2.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all active:scale-95"
-                title="Snel toevoegen"
-              >
-                <PackagePlus size={20} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setIsShareModalOpen(true)}
+                  className="p-2.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all active:scale-95"
+                  title="Delen met anderen"
+                >
+                  <UserPlus size={20} />
+                </button>
+                <button 
+                  onClick={() => setIsQuickAddOpen(true)}
+                  className="p-2.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all active:scale-95"
+                  title="Snel toevoegen"
+                >
+                  <PackagePlus size={20} />
+                </button>
+              </div>
             )}
             {user ? (
               <div className="flex items-center gap-3">
@@ -446,6 +512,11 @@ export default function App() {
                             <span className="text-[10px] font-bold px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded uppercase tracking-wider inline-block">
                               {filament.type}
                             </span>
+                            {user && filament.uid !== user.uid && (
+                              <span className="ml-1 text-[10px] font-bold px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded uppercase tracking-wider inline-block">
+                                {filament.ownerName || 'Gedeeld'}
+                              </span>
+                            )}
                           </div>
                           <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest mt-0.5 truncate">
                             {filament.brand}
@@ -884,10 +955,85 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* Share Modal */}
+      <AnimatePresence>
+        {isShareModalOpen && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsShareModalOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden"
+            >
+              <div className="p-6 sm:p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold">Delen</h2>
+                  <button onClick={() => setIsShareModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                    <X size={24} />
+                  </button>
+                </div>
+
+                <p className="text-sm text-gray-500 mb-6">
+                  Deel je filament voorraad met andere Google accounts. Zij kunnen je voorraad bekijken en bewerken.
+                </p>
+
+                <form onSubmit={handleAddShare} className="flex gap-2 mb-8">
+                  <div className="relative flex-1">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input 
+                      type="email" 
+                      required
+                      placeholder="email@gmail.com"
+                      value={newShareEmail}
+                      onChange={e => setNewShareEmail(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+                    />
+                  </div>
+                  <button 
+                    type="submit"
+                    className="px-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-100"
+                  >
+                    Voeg toe
+                  </button>
+                </form>
+
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Gedeeld met</h3>
+                  {sharedEmails.length === 0 ? (
+                    <p className="text-sm text-gray-400 italic">Nog met niemand gedeeld.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {sharedEmails.map(email => (
+                        <div key={email} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                          <span className="text-sm font-medium text-gray-700">{email}</span>
+                          <button 
+                            onClick={() => handleRemoveShare(email)}
+                            className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Version Number */}
       <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 text-center">
         <p className="text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em]">
-          Filament Tracker v1.17.0
+          Filament Tracker v1.19.0
         </p>
       </footer>
     </div>

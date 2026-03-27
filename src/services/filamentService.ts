@@ -8,12 +8,16 @@ import {
   where, 
   orderBy, 
   onSnapshot,
-  getDocFromServer
+  getDocFromServer,
+  setDoc,
+  getDoc,
+  getDocs
 } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { Filament, FilamentFormData } from '../types';
 
 const COLLECTION_NAME = 'filaments';
+const SHARES_COLLECTION = 'shares';
 
 export enum OperationType {
   CREATE = 'create',
@@ -67,24 +71,76 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 }
 
 export const filamentService = {
-  subscribeToFilaments: (callback: (filaments: Filament[]) => void) => {
+  subscribeToFilaments: (callback: (filaments: Filament[]) => void, onError?: (error: any) => void) => {
     if (!auth.currentUser) return () => {};
 
-    const q = query(
-      collection(db, COLLECTION_NAME),
-      where('uid', '==', auth.currentUser.uid),
-      orderBy('createdAt', 'desc')
+    const currentUid = auth.currentUser.uid;
+    const currentEmail = auth.currentUser.email;
+
+    // First, find all UIDs that have shared their data with the current user
+    const sharesQuery = query(
+      collection(db, SHARES_COLLECTION),
+      where('emails', 'array-contains', currentEmail)
     );
 
-    return onSnapshot(q, (snapshot) => {
-      const filaments: Filament[] = snapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id
-      } as Filament));
-      callback(filaments);
+    let filamentUnsubscribe: (() => void) | null = null;
+
+    const sharesUnsubscribe = onSnapshot(sharesQuery, (sharesSnapshot) => {
+      const sharedUids = sharesSnapshot.docs.map(doc => doc.id);
+      const allUids = [currentUid, ...sharedUids];
+
+      if (filamentUnsubscribe) filamentUnsubscribe();
+
+      const filamentsQuery = query(
+        collection(db, COLLECTION_NAME),
+        where('uid', 'in', allUids),
+        orderBy('createdAt', 'desc')
+      );
+
+      filamentUnsubscribe = onSnapshot(filamentsQuery, (snapshot) => {
+        const filaments: Filament[] = snapshot.docs.map(doc => ({
+          ...doc.data(),
+          id: doc.id
+        } as Filament));
+        callback(filaments);
+      }, (error) => {
+        if (onError) onError(error);
+        handleFirestoreError(error, OperationType.LIST, COLLECTION_NAME);
+      });
     }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, COLLECTION_NAME);
+      if (onError) onError(error);
+      handleFirestoreError(error, OperationType.LIST, SHARES_COLLECTION);
     });
+
+    return () => {
+      sharesUnsubscribe();
+      if (filamentUnsubscribe) filamentUnsubscribe();
+    };
+  },
+
+  getShares: async (): Promise<string[]> => {
+    if (!auth.currentUser) throw new Error('User not authenticated');
+    const docRef = doc(db, SHARES_COLLECTION, auth.currentUser.uid);
+    try {
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return docSnap.data().emails || [];
+      }
+      return [];
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, `${SHARES_COLLECTION}/${auth.currentUser.uid}`);
+      return [];
+    }
+  },
+
+  updateShares: async (emails: string[]): Promise<void> => {
+    if (!auth.currentUser) throw new Error('User not authenticated');
+    const docRef = doc(db, SHARES_COLLECTION, auth.currentUser.uid);
+    try {
+      await setDoc(docRef, { emails });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, `${SHARES_COLLECTION}/${auth.currentUser.uid}`);
+    }
   },
 
   addFilament: async (formData: FilamentFormData): Promise<string> => {
@@ -93,6 +149,7 @@ export const filamentService = {
     const newFilament = {
       ...formData,
       uid: auth.currentUser.uid,
+      ownerName: auth.currentUser.displayName || auth.currentUser.email || 'Onbekend',
       lastUsed: new Date().toISOString(),
       createdAt: new Date().toISOString()
     };

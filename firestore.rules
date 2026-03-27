@@ -9,6 +9,7 @@ service cloud.firestore {
     // Document ID: auto-generated
     // Fields:
     //   - uid: string (required, immutable) - Owner's UID
+    //   - ownerName: string (optional) - Display name of the owner
     //   - brand: string (required)
     //   - type: string (required)
     //   - colorName: string (required)
@@ -17,6 +18,11 @@ service cloud.firestore {
     //   - notes: string (optional)
     //   - lastUsed: string (optional, ISO 8601)
     //   - createdAt: string (optional, ISO 8601)
+    //
+    // Collection: shares
+    // Document ID: owner's UID
+    // Fields:
+    //   - emails: list<string> (required) - List of emails with access
     //
     // ===============================================================
 
@@ -35,6 +41,18 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == resource.data.uid;
     }
 
+    function isAdmin() {
+      return isAuthenticated() &&
+        (request.auth.token.email == "evens.glenn@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function isSharedWith(ownerUid) {
+      return isAuthenticated() && 
+             request.auth.token.email_verified == true &&
+             exists(/databases/$(database)/documents/shares/$(ownerUid)) &&
+             request.auth.token.email in get(/databases/$(database)/documents/shares/$(ownerUid)).data.emails;
+    }
+
     function hasRequiredFields(fields) {
       return request.resource.data.keys().hasAll(fields);
     }
@@ -43,13 +61,18 @@ service cloud.firestore {
       return request.resource.data.keys().hasOnly(fields);
     }
 
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
     // ===============================================================
     // Domain Validators
     // ===============================================================
     function isValidFilament(data) {
       return hasRequiredFields(['uid', 'brand', 'type', 'colorName', 'colorHex', 'quantity']) &&
-             hasOnlyAllowedFields(['uid', 'brand', 'type', 'colorName', 'colorHex', 'quantity', 'notes', 'lastUsed', 'createdAt']) &&
+             hasOnlyAllowedFields(['uid', 'ownerName', 'brand', 'type', 'colorName', 'colorHex', 'quantity', 'notes', 'lastUsed', 'createdAt']) &&
              data.uid is string && data.uid.size() > 0 &&
+             (!('ownerName' in data) || (data.ownerName is string && data.ownerName.size() < 100)) &&
              data.brand is string && data.brand.size() > 0 && data.brand.size() < 100 &&
              data.type is string && data.type.size() > 0 && data.type.size() < 50 &&
              data.colorName is string && data.colorName.size() > 0 && data.colorName.size() < 100 &&
@@ -60,23 +83,51 @@ service cloud.firestore {
              (!('createdAt' in data) || data.createdAt is string);
     }
 
+    function isValidShare(data) {
+      return hasRequiredFields(['emails']) &&
+             hasOnlyAllowedFields(['emails']) &&
+             data.emails is list && data.emails.size() <= 10;
+    }
+
     match /filaments/{filamentId} {
-      // Users can only read their own filaments
-      allow read: if isAuthenticated() && (resource == null || resource.data.uid == request.auth.uid);
+      // Users can read their own filaments or those shared with them
+      allow read: if isAuthenticated() && (
+        (resource != null && resource.data.uid == request.auth.uid) || 
+        isSharedWith(resource.data.uid) ||
+        isAdmin()
+      );
       
       // Users can only create filaments for themselves
       allow create: if isAuthenticated() && 
                       isValidFilament(request.resource.data) && 
                       request.resource.data.uid == request.auth.uid;
       
-      // Users can only update their own filaments
+      // Users can update their own filaments or those shared with them
       allow update: if isAuthenticated() && 
-                      isDocOwner() && 
+                      (isDocOwner() || isSharedWith(resource.data.uid) || isAdmin()) && 
                       isValidFilament(request.resource.data) && 
                       request.resource.data.uid == resource.data.uid;
       
-      // Users can only delete their own filaments
-      allow delete: if isAuthenticated() && isDocOwner();
+      // Users can only delete their own filaments (or admin)
+      allow delete: if isAuthenticated() && (isDocOwner() || isAdmin());
+    }
+
+    match /shares/{ownerUid} {
+      // Owner has full access. We split get/list to ensure query compatibility.
+      allow get: if isOwner(ownerUid) || (
+        isAuthenticated() && 
+        request.auth.token.email_verified == true &&
+        resource != null && 
+        request.auth.token.email in resource.data.emails
+      );
+      
+      // This allows the collection query: where('emails', 'array-contains', email)
+      allow list: if isAuthenticated() && 
+                     request.auth.token.email_verified == true &&
+                     request.auth.token.email in resource.data.emails;
+      
+      // Only the owner can manage their shares
+      allow write: if isOwner(ownerUid) && isValidShare(request.resource.data);
     }
   }
 }

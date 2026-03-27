@@ -3,6 +3,7 @@ export type FilamentType = 'PLA Basic' | 'PLA Matte' | 'PLA Glow' | 'PETG-HF' | 
 export interface Filament {
   id: string;
   uid: string;
+  ownerName?: string;
   brand: string;
   type: FilamentType;
   colorName: string;

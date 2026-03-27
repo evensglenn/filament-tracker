@@ -391,28 +391,28 @@ export default function App() {
           ) : (
           <>
             {/* Filters & Search */}
-            <div className="flex flex-col gap-4 mb-6">
-              {/* Search Bar */}
-              <div className="relative w-full">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <input 
-                  type="text" 
-                  placeholder="Zoek op kleur of merk..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-[52px] pl-12 pr-4 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm font-medium text-base"
-                />
-              </div>
+            <div className="flex flex-col gap-5 mb-8">
+              <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                {/* Search Bar */}
+                <div className="relative flex-1 lg:max-w-[240px]">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <input 
+                    type="text" 
+                    placeholder="Zoek..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full h-[36px] pl-10 pr-4 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm font-medium text-xs"
+                  />
+                </div>
 
-              <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
-                <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                <div className="flex flex-wrap gap-3 flex-1 lg:justify-end">
                   {/* Filter Button Bar */}
-                  <div className="inline-flex p-1 bg-gray-100 rounded-2xl shrink-0">
+                  <div className="inline-flex p-1 bg-gray-100 rounded-xl shrink-0">
                     {['All', 'PLA', 'PETG'].map(option => (
                       <button 
                         key={option}
                         onClick={() => setFilterType(option)}
-                        className={`px-5 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${filterType === option ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${filterType === option ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                       >
                         {option === 'All' ? 'Alle' : option}
                       </button>
@@ -420,7 +420,7 @@ export default function App() {
                   </div>
 
                   {/* Sort Button Bar */}
-                  <div className="inline-flex p-1 bg-gray-100 rounded-2xl shrink-0">
+                  <div className="inline-flex p-1 bg-gray-100 rounded-xl shrink-0">
                     {[
                       { id: 'name', label: 'Naam' },
                       { id: 'color', label: 'Kleur' },
@@ -429,7 +429,7 @@ export default function App() {
                       <button 
                         key={sort.id}
                         onClick={() => handleSort(sort.id as any)}
-                        className={`px-5 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${sortBy === sort.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${sortBy === sort.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                       >
                         {sort.label}
                         {sortBy === sort.id && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
@@ -437,35 +437,39 @@ export default function App() {
                     ))}
                   </div>
                 </div>
+              </div>
 
+              {/* Total Quantity & Spools - Moved below the bars on the right */}
+              <div className="flex justify-end">
                 <motion.button 
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
                   key={`${filterType}-${searchQuery}`}
                   onClick={() => setIsShareViewOpen(true)}
-                  className="flex items-center gap-3 shrink-0 cursor-pointer hover:opacity-70 transition-opacity ml-auto md:ml-0"
+                  className="flex items-center gap-3 shrink-0 cursor-pointer hover:opacity-70 transition-opacity"
                   title="Deel dit overzicht"
                 >
-                  <div className="flex -space-x-2.5">
+                  <div className="flex -space-x-2">
                     {filteredFilaments.slice(0, 5).map((f, i) => (
                       <div 
                         key={f.id} 
-                        className="w-8 h-8 rounded-full border-2 border-white shadow-sm flex items-center justify-center"
+                        className="w-6 h-6 rounded-full border-2 border-white shadow-sm flex items-center justify-center"
                         style={{ backgroundColor: f.colorHex, zIndex: 5 - i }}
                       >
-                        <Disc size={12} className="text-white/20" />
+                        <Disc size={10} className="text-white/20" />
                       </div>
                     ))}
                     {filteredFilaments.length > 5 && (
-                      <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-50 flex items-center justify-center text-[9px] font-black text-gray-400 z-0 shadow-sm">
+                      <div className="w-6 h-6 rounded-full border-2 border-white bg-gray-50 flex items-center justify-center text-[8px] font-black text-gray-400 z-0 shadow-sm">
                         +{filteredFilaments.length - 5}
                       </div>
                     )}
                   </div>
-                  <div className="flex items-baseline gap-1 ml-1">
-                    <span className="text-lg font-black text-gray-900">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm font-black text-gray-900">
                       {filteredFilaments.reduce((acc, f) => acc + f.quantity, 0).toFixed(1)}
                     </span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Rollen</span>
                   </div>
                 </motion.button>
               </div>

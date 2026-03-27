@@ -259,6 +259,41 @@ export default function App() {
           </div>
         ) : (
           <>
+            {/* Stock Overview */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white border border-gray-200 rounded-2xl p-6 mb-8 flex items-center justify-between shadow-sm overflow-hidden relative"
+            >
+              <div className="relative z-10">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Totale Voorraad</p>
+                <div className="flex items-baseline gap-2">
+                  <h2 className="text-4xl font-black text-gray-900">
+                    {filaments.reduce((acc, f) => acc + f.quantity, 0).toFixed(1)}
+                  </h2>
+                  <span className="text-lg font-bold text-gray-400">rollen</span>
+                </div>
+              </div>
+              <div className="relative z-10 flex -space-x-3">
+                {filaments.slice(0, 5).map((f, i) => (
+                  <div 
+                    key={f.id} 
+                    className="w-12 h-12 rounded-full border-4 border-white shadow-md flex items-center justify-center"
+                    style={{ backgroundColor: f.colorHex, zIndex: 5 - i }}
+                  >
+                    <Disc size={20} className="text-white/30" />
+                  </div>
+                ))}
+                {filaments.length > 5 && (
+                  <div className="w-12 h-12 rounded-full border-4 border-white bg-gray-100 shadow-md flex items-center justify-center text-xs font-bold text-gray-500 z-0">
+                    +{filaments.length - 5}
+                  </div>
+                )}
+              </div>
+              {/* Decorative background element */}
+              <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-emerald-50 rounded-full blur-3xl opacity-50" />
+            </motion.div>
+
             {/* Filters & Search */}
         <div className="flex flex-col gap-4 mb-8">
           <div className="flex flex-col md:flex-row gap-4">
@@ -627,7 +662,7 @@ export default function App() {
       {/* Version Number */}
       <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 text-center">
         <p className="text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em]">
-          Filament Tracker v1.8.1
+          Filament Tracker v1.9.0
         </p>
       </footer>
     </div>

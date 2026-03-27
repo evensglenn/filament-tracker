@@ -246,7 +246,8 @@ export default function App() {
   const filteredFilaments = filaments
     .filter(f => {
       const matchesSearch = f.colorName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           f.brand.toLowerCase().includes(searchQuery.toLowerCase());
+                           f.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           f.type.toLowerCase().includes(searchQuery.toLowerCase());
       
       let matchesType = false;
       if (filterType === 'All') {

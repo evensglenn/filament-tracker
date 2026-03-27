@@ -388,87 +388,85 @@ export default function App() {
           ) : (
           <>
             {/* Filters & Search */}
-        <div className="flex flex-col gap-3 mb-6">
-          <div className="flex flex-col md:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input 
-                type="text" 
-                placeholder="Zoek op kleur of merk..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-[46px] pl-10 pr-4 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm font-medium"
-              />
-            </div>
-            <div className="flex items-center gap-2 overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
-              <button 
-                onClick={() => handleSort('name')}
-                className={`px-4 h-[46px] rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border shrink-0 ${sortBy === 'name' ? 'bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-200' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-900 hover:bg-gray-50'}`}
-              >
-                Naam
-                {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
-              </button>
-              <button 
-                onClick={() => handleSort('color')}
-                className={`px-4 h-[46px] rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border shrink-0 ${sortBy === 'color' ? 'bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-200' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-900 hover:bg-gray-50'}`}
-              >
-                Kleur
-                {sortBy === 'color' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
-              </button>
-              <button 
-                onClick={() => handleSort('quantity')}
-                className={`px-4 h-[46px] rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 border shrink-0 ${sortBy === 'quantity' ? 'bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-200' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-900 hover:bg-gray-50'}`}
-              >
-                Voorraad
-                {sortBy === 'quantity' && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
-              </button>
-            </div>
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
-              {['All', 'PLA', 'PETG'].map(option => (
-                <button 
-                  key={option}
-                  onClick={() => setFilterType(option)}
-                  className={`px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all border ${filterType === option ? 'bg-gray-900 border-gray-900 text-white shadow-lg shadow-gray-200' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-900 hover:bg-gray-50'}`}
+            <div className="flex flex-col gap-4 mb-6">
+              {/* Search Bar */}
+              <div className="relative w-full">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <input 
+                  type="text" 
+                  placeholder="Zoek op kleur of merk..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full h-[52px] pl-12 pr-4 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm font-medium text-base"
+                />
+              </div>
+
+              <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
+                <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                  {/* Filter Button Bar */}
+                  <div className="inline-flex p-1 bg-gray-100 rounded-2xl shrink-0">
+                    {['All', 'PLA', 'PETG'].map(option => (
+                      <button 
+                        key={option}
+                        onClick={() => setFilterType(option)}
+                        className={`px-5 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${filterType === option ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                      >
+                        {option === 'All' ? 'Alle' : option}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Sort Button Bar */}
+                  <div className="inline-flex p-1 bg-gray-100 rounded-2xl shrink-0">
+                    {[
+                      { id: 'name', label: 'Naam' },
+                      { id: 'color', label: 'Kleur' },
+                      { id: 'quantity', label: 'Voorraad' }
+                    ].map(sort => (
+                      <button 
+                        key={sort.id}
+                        onClick={() => handleSort(sort.id as any)}
+                        className={`px-5 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${sortBy === sort.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                      >
+                        {sort.label}
+                        {sortBy === sort.id && (sortOrder === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <motion.button 
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  key={`${filterType}-${searchQuery}`}
+                  onClick={() => setIsShareViewOpen(true)}
+                  className="flex items-center gap-3 shrink-0 cursor-pointer hover:opacity-70 transition-opacity ml-auto md:ml-0"
+                  title="Deel dit overzicht"
                 >
-                  {option === 'All' ? 'Alle' : option}
-                </button>
-              ))}
+                  <div className="flex -space-x-2.5">
+                    {filteredFilaments.slice(0, 5).map((f, i) => (
+                      <div 
+                        key={f.id} 
+                        className="w-8 h-8 rounded-full border-2 border-white shadow-sm flex items-center justify-center"
+                        style={{ backgroundColor: f.colorHex, zIndex: 5 - i }}
+                      >
+                        <Disc size={12} className="text-white/20" />
+                      </div>
+                    ))}
+                    {filteredFilaments.length > 5 && (
+                      <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-50 flex items-center justify-center text-[9px] font-black text-gray-400 z-0 shadow-sm">
+                        +{filteredFilaments.length - 5}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-baseline gap-1 ml-1">
+                    <span className="text-lg font-black text-gray-900">
+                      {filteredFilaments.reduce((acc, f) => acc + f.quantity, 0).toFixed(1)}
+                    </span>
+                  </div>
+                </motion.button>
+              </div>
             </div>
-            
-            <motion.button 
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              key={`${filterType}-${searchQuery}`}
-              onClick={() => setIsShareViewOpen(true)}
-              className="flex items-center gap-3 shrink-0 cursor-pointer hover:opacity-70 transition-opacity"
-              title="Deel dit overzicht"
-            >
-              <div className="flex -space-x-2.5">
-                {filteredFilaments.slice(0, 5).map((f, i) => (
-                  <div 
-                    key={f.id} 
-                    className="w-8 h-8 rounded-full border-2 border-white shadow-sm flex items-center justify-center"
-                    style={{ backgroundColor: f.colorHex, zIndex: 5 - i }}
-                  >
-                    <Disc size={12} className="text-white/20" />
-                  </div>
-                ))}
-                {filteredFilaments.length > 5 && (
-                  <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-50 flex items-center justify-center text-[9px] font-black text-gray-400 z-0 shadow-sm">
-                    +{filteredFilaments.length - 5}
-                  </div>
-                )}
-              </div>
-              <div className="flex items-baseline gap-1 ml-1">
-                <span className="text-lg font-black text-gray-900">
-                  {filteredFilaments.reduce((acc, f) => acc + f.quantity, 0).toFixed(1)}
-                </span>
-              </div>
-            </motion.button>
-          </div>
-        </div>
 
         {/* Inventory Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">

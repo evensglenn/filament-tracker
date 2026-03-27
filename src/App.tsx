@@ -182,6 +182,13 @@ export default function App() {
     setEditingId(null);
   };
 
+  const handleDeleteFromModal = () => {
+    if (editingId) {
+      setDeleteId(editingId);
+      setIsModalOpen(false);
+    }
+  };
+
   const selectPreset = (name: string, hex: string) => {
     setFormData({ ...formData, colorName: name, colorHex: hex });
   };
@@ -303,7 +310,7 @@ export default function App() {
         transition={{ duration: 0.35, ease: "easeInOut" }}
         className="bg-white border-b border-gray-200 sticky top-0 z-40"
       >
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-200">
               <Disc size={24} />
@@ -355,7 +362,7 @@ export default function App() {
         </div>
       </motion.header>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {!isAuthReady ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
@@ -465,7 +472,7 @@ export default function App() {
         </div>
 
         {/* Inventory Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <AnimatePresence mode="popLayout">
             {filteredFilaments.map((filament) => {
               return (
@@ -475,10 +482,11 @@ export default function App() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   key={filament.id}
-                  className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all group"
+                  onClick={() => openModal(filament)}
+                  className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all group cursor-pointer"
                 >
-                  <div className="p-5">
-                    <div className="flex justify-between items-start mb-4 gap-2">
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-3 gap-2">
                       <div className="flex items-center gap-3 min-w-0">
                         <div 
                           className="w-12 h-12 rounded-full border-4 border-gray-50 shadow-inner shrink-0"
@@ -503,29 +511,12 @@ export default function App() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex gap-1 shrink-0 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                        <button 
-                          onClick={() => openModal(filament)}
-                          className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button 
-                          onClick={() => setDeleteId(filament.id)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <div className={`p-4 rounded-2xl flex flex-col items-center justify-center border border-transparent transition-all relative group/qty ${getQuantityColor(filament.quantity)}`}>
-                        <div className="flex items-center gap-2 mb-1">
-                          <Disc size={18} />
-                          <span className="text-xs font-bold uppercase tracking-wider">Voorraad</span>
-                        </div>
-                        <p className="text-3xl font-black">{filament.quantity} <span className="text-lg font-bold">{filament.quantity === 1 ? 'rol' : 'rollen'}</span></p>
+                    <div className="space-y-3">
+                      <div className={`p-3 rounded-2xl flex items-center justify-center gap-3 border border-transparent transition-all relative group/qty ${getQuantityColor(filament.quantity)}`}>
+                        <Disc size={20} />
+                        <p className="text-2xl font-black">{filament.quantity} <span className="text-sm font-bold uppercase tracking-wider">{filament.quantity === 1 ? 'rol' : 'rollen'}</span></p>
                       </div>
                     </div>
                   </div>
@@ -578,7 +569,7 @@ export default function App() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 onClick={() => openModal()}
-                className="group relative flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all min-h-[200px]"
+                className="group relative flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all min-h-[160px]"
               >
                 <div className="w-12 h-12 bg-gray-50 group-hover:bg-emerald-100 rounded-full flex items-center justify-center text-gray-400 group-hover:text-emerald-600 transition-colors mb-3">
                   <Plus size={24} strokeWidth={3} />
@@ -733,6 +724,19 @@ export default function App() {
                       {editingId ? 'Bewaar' : 'Voeg toe'}
                     </button>
                   </div>
+
+                  {editingId && (
+                    <div className="pt-2 border-t border-gray-100 mt-4">
+                      <button 
+                        type="button"
+                        onClick={handleDeleteFromModal}
+                        className="w-full px-6 py-3 text-red-600 font-bold rounded-xl hover:bg-red-50 transition-all active:scale-95 flex items-center justify-center gap-2"
+                      >
+                        <Trash2 size={18} />
+                        Verwijder
+                      </button>
+                    </div>
+                  )}
                 </form>
               </div>
             </motion.div>

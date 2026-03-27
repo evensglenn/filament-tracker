@@ -388,8 +388,8 @@ export default function App() {
           ) : (
           <>
             {/* Filters & Search */}
-        <div className="flex flex-col gap-4 mb-8">
-          <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex flex-col gap-3 mb-6">
+          <div className="flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input 
@@ -424,7 +424,7 @@ export default function App() {
               </button>
             </div>
           </div>
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-3">
             <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
               {['All', 'PLA', 'PETG'].map(option => (
                 <button 
@@ -472,7 +472,7 @@ export default function App() {
         </div>
 
         {/* Inventory Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <AnimatePresence mode="popLayout">
             {filteredFilaments.map((filament) => {
               return (

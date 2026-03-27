@@ -22,17 +22,20 @@ const getHue = (hex: string) => {
 
   // Achromatic colors (Black, Gray, White)
   if (s < 0.15) {
-    // Sort by lightness: Black (0) -> Gray (0.5) -> White (1)
-    return l; 
+    // Sort by lightness: White -> Gray -> Black
+    // Put them after chromatic colors
+    return 10 + (1 - l); 
   }
 
   let h = 0;
-  if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+  if (max === r) h = (g - b) / d;
   else if (max === g) h = (b - r) / d + 2;
   else if (max === b) h = (r - g) / d + 4;
 
-  // Offset chromatic colors so they come after achromatic ones in the spectrum
-  return (h / 6) + 2;
+  // Normalize so Red (around 0) is at the start
+  if (h < -0.5) h += 6;
+  
+  return h;
 };
 
 export default function App() {
@@ -310,7 +313,7 @@ export default function App() {
         transition={{ duration: 0.35, ease: "easeInOut" }}
         className="bg-white border-b border-gray-200 sticky top-0 z-40"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-200">
               <Disc size={24} />
@@ -362,7 +365,7 @@ export default function App() {
         </div>
       </motion.header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         {!isAuthReady ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
@@ -469,7 +472,7 @@ export default function App() {
             </div>
 
         {/* Inventory Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           <AnimatePresence mode="popLayout">
             {filteredFilaments.map((filament) => {
               return (
@@ -480,49 +483,45 @@ export default function App() {
                   exit={{ opacity: 0, scale: 0.95 }}
                   key={filament.id}
                   onClick={() => openModal(filament)}
-                  className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all group cursor-pointer"
+                  className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all group cursor-pointer flex"
                 >
-                  <div className="p-4">
-                    <div className="flex justify-between items-start mb-3 gap-2">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div 
-                          className="w-12 h-12 rounded-full border-4 border-gray-50 shadow-inner shrink-0"
-                          style={{ backgroundColor: filament.colorHex }}
-                        />
-                        <div className="min-w-0">
-                          <h3 className="font-bold text-lg leading-tight truncate" title={filament.colorName}>
-                            {filament.colorName.split(' (')[0]}
-                          </h3>
-                          <div className="mt-1">
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded uppercase tracking-wider inline-block">
-                              {filament.type}
+                  <div className="flex-1 p-4 min-w-0">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div 
+                        className="w-12 h-12 rounded-full border-4 border-gray-50 shadow-inner shrink-0"
+                        style={{ backgroundColor: filament.colorHex }}
+                      />
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-lg leading-tight truncate" title={filament.colorName}>
+                          {filament.colorName.split(' (')[0]}
+                        </h3>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded uppercase tracking-wider inline-block">
+                            {filament.type}
+                          </span>
+                          {user && filament.uid !== user.uid && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded uppercase tracking-wider inline-block">
+                              {filament.ownerName || 'Gedeeld'}
                             </span>
-                            {user && filament.uid !== user.uid && (
-                              <span className="ml-1 text-[10px] font-bold px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded uppercase tracking-wider inline-block">
-                                {filament.ownerName || 'Gedeeld'}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest mt-0.5 truncate">
-                            {filament.brand}
-                          </p>
+                          )}
                         </div>
+                        <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest mt-0.5 truncate">
+                          {filament.brand}
+                        </p>
                       </div>
                     </div>
-
-                    <div className="space-y-3">
-                      <div className={`p-3 rounded-2xl flex items-center justify-center gap-3 border border-transparent transition-all relative group/qty ${getQuantityColor(filament.quantity)}`}>
-                        <Disc size={20} />
-                        <p className="text-2xl font-black">{filament.quantity}</p>
+                    
+                    {filament.notes && (
+                      <div className="mt-3 text-[10px] text-gray-400 italic line-clamp-1">
+                        {filament.notes}
                       </div>
-                    </div>
+                    )}
                   </div>
-                  
-                  {filament.notes && (
-                    <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 text-xs text-gray-500 italic">
-                      {filament.notes}
-                    </div>
-                  )}
+
+                  <div className={`w-14 flex flex-col items-center justify-center gap-1 transition-all shrink-0 ${getQuantityColor(filament.quantity)}`}>
+                    <Disc size={18} />
+                    <p className="text-xl font-black leading-none">{filament.quantity}</p>
+                  </div>
                 </motion.div>
               );
             })}
@@ -566,12 +565,12 @@ export default function App() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 onClick={() => openModal()}
-                className="group relative flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all min-h-[160px]"
+                className="group relative flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all min-h-[100px]"
               >
-                <div className="w-12 h-12 bg-gray-50 group-hover:bg-emerald-100 rounded-full flex items-center justify-center text-gray-400 group-hover:text-emerald-600 transition-colors mb-3">
-                  <Plus size={24} strokeWidth={3} />
+                <div className="w-10 h-10 bg-gray-50 group-hover:bg-emerald-100 rounded-full flex items-center justify-center text-gray-400 group-hover:text-emerald-600 transition-colors mb-2">
+                  <Plus size={20} strokeWidth={3} />
                 </div>
-                <span className="text-sm font-bold text-gray-400 group-hover:text-emerald-600 transition-colors">Voeg toe</span>
+                <span className="text-xs font-bold text-gray-400 group-hover:text-emerald-600 transition-colors">Voeg toe</span>
               </motion.button>
             )}
           </AnimatePresence>
@@ -1020,7 +1019,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* Version Number */}
-      <footer className="max-w-7xl mx-auto px-4 sm:px-6 py-8 text-center">
+      <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 text-center">
         <p className="text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em]">
           Filament Tracker v2.0.0
         </p>

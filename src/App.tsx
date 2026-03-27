@@ -465,7 +465,6 @@ export default function App() {
                 <span className="text-lg font-black text-gray-900">
                   {filteredFilaments.reduce((acc, f) => acc + f.quantity, 0).toFixed(1)}
                 </span>
-                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">rollen</span>
               </div>
             </motion.button>
           </div>
@@ -516,7 +515,7 @@ export default function App() {
                     <div className="space-y-3">
                       <div className={`p-3 rounded-2xl flex items-center justify-center gap-3 border border-transparent transition-all relative group/qty ${getQuantityColor(filament.quantity)}`}>
                         <Disc size={20} />
-                        <p className="text-2xl font-black">{filament.quantity} <span className="text-sm font-bold uppercase tracking-wider">{filament.quantity === 1 ? 'rol' : 'rollen'}</span></p>
+                        <p className="text-2xl font-black">{filament.quantity}</p>
                       </div>
                     </div>
                   </div>

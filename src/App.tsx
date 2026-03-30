@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Minus, Trash2, Edit2, Disc, Search, Filter, AlertCircle, Check, ArrowUp, ArrowDown, LogOut, LogIn, User, LayoutGrid, X, Share2, PackagePlus, UserPlus, Mail, ShieldAlert, Lock } from 'lucide-react';
+import { Plus, Minus, Trash2, Edit2, Disc, Search, Filter, AlertCircle, Check, ArrowUp, ArrowDown, LogOut, LogIn, User, LayoutGrid, X, Share2, PackagePlus, UserPlus, Mail, ShieldAlert, Lock, Printer } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'motion/react';
 import { Filament, FilamentType, FilamentFormData } from './types';
 import { BAMBU_COLORS } from './constants';
@@ -52,10 +52,12 @@ export default function App() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [isShareViewOpen, setIsShareViewOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [sharedEmails, setSharedEmails] = useState<string[]>([]);
   const [newShareEmail, setNewShareEmail] = useState('');
   const [deliveryQuantities, setDeliveryQuantities] = useState<Record<string, number>>({});
+  const [printUsages, setPrintUsages] = useState<Record<string, number>>({});
   const [showHeader, setShowHeader] = useState(true);
   const { scrollY } = useScroll();
 
@@ -164,6 +166,7 @@ export default function App() {
         colorName: filament.colorName,
         colorHex: filament.colorHex,
         quantity: filament.quantity,
+        spoolWeight: filament.spoolWeight || 1000,
         notes: filament.notes || ''
       });
     } else {
@@ -174,6 +177,7 @@ export default function App() {
         colorName: '',
         colorHex: '#000000',
         quantity: 1,
+        spoolWeight: 1000,
         notes: ''
       });
     }
@@ -214,7 +218,7 @@ export default function App() {
         const filament = filaments.find(f => f.id === id);
         if (filament) {
           await filamentService.updateFilament(id, {
-            quantity: filament.quantity + (qty as number)
+            quantity: Number((filament.quantity + (qty as number)).toFixed(2))
           });
         }
       }
@@ -225,12 +229,38 @@ export default function App() {
     }
   };
 
+  const handleConfirmPrint = async () => {
+    const updates = Object.entries(printUsages).filter(([_, usage]) => (usage as number) > 0);
+    if (updates.length === 0) {
+      setIsPrintModalOpen(false);
+      return;
+    }
+
+    try {
+      for (const [id, usage] of updates) {
+        const filament = filaments.find(f => f.id === id);
+        if (filament) {
+          // usage is in grams, spoolWeight is in grams
+          const spoolUsage = (usage as number) / (filament.spoolWeight || 1000);
+          await filamentService.updateFilament(id, {
+            quantity: Number(Math.max(0, filament.quantity - spoolUsage).toFixed(3))
+          });
+        }
+      }
+      setPrintUsages({});
+      setIsPrintModalOpen(false);
+    } catch (error) {
+      console.error('Failed to confirm print:', error);
+    }
+  };
+
   const [formData, setFormData] = useState<FilamentFormData>({
     brand: 'Bambu Lab',
     type: 'PLA Basic',
     colorName: '',
     colorHex: '#000000',
     quantity: 1,
+    spoolWeight: 1000,
     notes: ''
   });
 
@@ -326,6 +356,13 @@ export default function App() {
           <div className="flex items-center gap-2">
             {user ? (
               <>
+                <button 
+                  onClick={() => setIsPrintModalOpen(true)}
+                  className="p-2.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all active:scale-95"
+                  title="Nieuwe print"
+                >
+                  <Printer size={20} />
+                </button>
                 <button 
                   onClick={() => setIsQuickAddOpen(true)}
                   className="p-2.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all active:scale-95"
@@ -684,25 +721,27 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Aantal Rollen</label>
-                    <div className="flex items-center gap-4">
-                      <input 
-                        type="range" 
-                        min="0" 
-                        max="10" 
-                        step="0.1"
-                        value={formData.quantity}
-                        onChange={e => setFormData({...formData, quantity: Number(e.target.value)})}
-                        className="flex-1 h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-                      />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Aantal Rollen</label>
                       <input 
                         type="number" 
                         step="0.1"
                         min="0"
                         value={formData.quantity}
                         onChange={e => setFormData({...formData, quantity: Number(e.target.value)})}
-                        className="w-24 px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-center font-bold focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl font-bold focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Gewicht per rol (g)</label>
+                      <input 
+                        type="number" 
+                        step="50"
+                        min="0"
+                        value={formData.spoolWeight}
+                        onChange={e => setFormData({...formData, spoolWeight: Number(e.target.value)})}
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl font-bold focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
                       />
                     </div>
                   </div>
@@ -948,6 +987,119 @@ export default function App() {
                   className="flex-[2] px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-100 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed"
                 >
                   Bewaar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* New Print Modal */}
+      <AnimatePresence>
+        {isPrintModalOpen && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setIsPrintModalOpen(false);
+                setPrintUsages({});
+              }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+            >
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-blue-600 text-white">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                    <Printer size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold leading-tight">Nieuwe print</h2>
+                  </div>
+                </div>
+                <button onClick={() => {
+                  setIsPrintModalOpen(false);
+                  setPrintUsages({});
+                }} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="p-6 overflow-y-auto flex-1 bg-gray-50">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                  {filaments.map(f => {
+                    const usage = printUsages[f.id] || 0;
+                    return (
+                      <div key={f.id} className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center text-center gap-2 relative group">
+                        <div 
+                          className="w-10 h-10 rounded-full border-2 border-gray-100 shadow-inner"
+                          style={{ backgroundColor: f.colorHex }}
+                        />
+                        <div className="min-w-0 w-full">
+                          <p className="text-[10px] font-black text-gray-900 truncate leading-tight uppercase tracking-tighter">
+                            {f.colorName}
+                          </p>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                            {f.type}
+                          </p>
+                          <p className="text-[10px] font-bold text-gray-400 mt-1">
+                            Voorraad: {f.quantity} rollen
+                          </p>
+                          
+                          <div className="mt-2 space-y-1">
+                            <div className="flex items-center justify-center gap-2">
+                              <button 
+                                onClick={() => setPrintUsages(prev => ({ ...prev, [f.id]: Math.max(0, (prev[f.id] || 0) - 10) }))}
+                                disabled={usage === 0}
+                                className={`w-7 h-7 rounded-full flex items-center justify-center border transition-all ${usage > 0 ? 'border-red-200 text-red-600 hover:bg-red-50 active:scale-90' : 'border-gray-100 text-gray-300 cursor-not-allowed'}`}
+                              >
+                                <Minus size={14} strokeWidth={3} />
+                              </button>
+                              <input 
+                                type="number"
+                                value={usage || ''}
+                                placeholder="0"
+                                onChange={(e) => setPrintUsages(prev => ({ ...prev, [f.id]: Number(e.target.value) }))}
+                                className="w-16 text-center font-black text-blue-600 bg-blue-50/50 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                              />
+                              <button 
+                                onClick={() => setPrintUsages(prev => ({ ...prev, [f.id]: (prev[f.id] || 0) + 10 }))}
+                                className="w-7 h-7 rounded-full flex items-center justify-center border border-blue-200 text-blue-600 hover:bg-blue-50 active:scale-90 transition-all"
+                              >
+                                <Plus size={14} strokeWidth={3} />
+                              </button>
+                            </div>
+                            <p className="text-[9px] font-bold text-gray-400 uppercase">gram gebruikt</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="p-4 bg-white border-t border-gray-100 flex gap-3">
+                <button 
+                  onClick={() => {
+                    setIsPrintModalOpen(false);
+                    setPrintUsages({});
+                  }}
+                  className="flex-1 px-6 py-3 border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition-all active:scale-95"
+                >
+                  Annuleer
+                </button>
+                <button 
+                  onClick={handleConfirmPrint}
+                  disabled={Object.values(printUsages).every(v => (v as number) === 0)}
+                  className="flex-[2] px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed"
+                >
+                  Bevestig verbruik
                 </button>
               </div>
             </motion.div>

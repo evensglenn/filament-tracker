@@ -9,6 +9,7 @@ export interface Filament {
   colorName: string;
   colorHex: string;
   quantity: number; // Number of spools (e.g., 1.5, 2)
+  spoolWeight: number; // Weight of a full spool in grams (e.g., 1000, 250)
   notes?: string;
   lastUsed?: string;
   createdAt?: string;
@@ -20,5 +21,6 @@ export interface FilamentFormData {
   colorName: string;
   colorHex: string;
   quantity: number;
+  spoolWeight: number;
   notes?: string;
 }

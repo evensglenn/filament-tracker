@@ -12,11 +12,12 @@
         "colorName": { "type": "string" },
         "colorHex": { "type": "string" },
         "quantity": { "type": "number" },
+        "spoolWeight": { "type": "number", "description": "Weight of a full spool in grams" },
         "notes": { "type": "string" },
         "lastUsed": { "type": "string", "format": "date-time" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["uid", "brand", "type", "colorName", "colorHex", "quantity"]
+      "required": ["uid", "brand", "type", "colorName", "colorHex", "quantity", "spoolWeight"]
     },
     "Share": {
       "title": "Share",

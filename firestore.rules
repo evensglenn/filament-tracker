@@ -15,6 +15,7 @@ service cloud.firestore {
     //   - colorName: string (required)
     //   - colorHex: string (required)
     //   - quantity: number (required)
+    //   - spoolWeight: number (required) - Weight of a full spool in grams
     //   - notes: string (optional)
     //   - lastUsed: string (optional, ISO 8601)
     //   - createdAt: string (optional, ISO 8601)
@@ -69,8 +70,8 @@ service cloud.firestore {
     // Domain Validators
     // ===============================================================
     function isValidFilament(data) {
-      return hasRequiredFields(['uid', 'brand', 'type', 'colorName', 'colorHex', 'quantity']) &&
-             hasOnlyAllowedFields(['uid', 'ownerName', 'brand', 'type', 'colorName', 'colorHex', 'quantity', 'notes', 'lastUsed', 'createdAt']) &&
+      return hasRequiredFields(['uid', 'brand', 'type', 'colorName', 'colorHex', 'quantity', 'spoolWeight']) &&
+             hasOnlyAllowedFields(['uid', 'ownerName', 'brand', 'type', 'colorName', 'colorHex', 'quantity', 'spoolWeight', 'notes', 'lastUsed', 'createdAt']) &&
              data.uid is string && data.uid.size() > 0 &&
              (!('ownerName' in data) || (data.ownerName is string && data.ownerName.size() < 100)) &&
              data.brand is string && data.brand.size() > 0 && data.brand.size() < 100 &&
@@ -78,6 +79,7 @@ service cloud.firestore {
              data.colorName is string && data.colorName.size() > 0 && data.colorName.size() < 100 &&
              data.colorHex is string && data.colorHex.matches('^#[0-9A-Fa-f]{6}$') &&
              data.quantity is number && data.quantity >= 0 && data.quantity < 1000 &&
+             data.spoolWeight is number && data.spoolWeight > 0 && data.spoolWeight < 10000 &&
              (!('notes' in data) || (data.notes is string && data.notes.size() < 1000)) &&
              (!('lastUsed' in data) || data.lastUsed is string) &&
              (!('createdAt' in data) || data.createdAt is string);

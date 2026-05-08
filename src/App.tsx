@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Minus, Trash2, Edit2, Disc, Search, Filter, AlertCircle, Check, ArrowUp, ArrowDown, LogOut, LogIn, User, LayoutGrid, X, Share2, PackagePlus, UserPlus, Mail, ShieldAlert, Lock, Printer } from 'lucide-react';
+import { Plus, Minus, Trash2, Edit2, Disc, Search, Filter, AlertCircle, Check, ArrowUp, ArrowDown, LogOut, LogIn, User, Settings, X, Share2, PackagePlus, Mail, ShieldAlert, Lock, Printer } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'motion/react';
-import { Filament, FilamentType, FilamentFormData } from './types';
+import { Filament, FilamentType, FilamentFormData, UserConfig, ManagedType, ColorPreset } from './types';
 import { BAMBU_COLORS } from './constants';
 import { filamentService } from './services/filamentService';
+import { configService } from './services/configService';
 import { auth } from './firebase';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-
-const TYPES: FilamentType[] = ['PLA Basic', 'PLA Matte', 'PLA Glow', 'PETG-HF', 'PETG Basic', 'PLA-CF', 'PETG-CF', 'TPU'];
 
 const getHue = (hex: string) => {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
@@ -40,10 +39,12 @@ const getHue = (hex: string) => {
 
 export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [config, setConfig] = useState<UserConfig | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [filaments, setFilaments] = useState<Filament[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,7 +54,6 @@ export default function App() {
   const [isShareViewOpen, setIsShareViewOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [sharedEmails, setSharedEmails] = useState<string[]>([]);
   const [newShareEmail, setNewShareEmail] = useState('');
   const [deliveryQuantities, setDeliveryQuantities] = useState<Record<string, number>>({});
@@ -101,6 +101,19 @@ export default function App() {
     });
 
     return () => unsubscribeFilaments();
+  }, [isAuthReady, user]);
+
+  useEffect(() => {
+    if (!isAuthReady || !user) {
+      setConfig(null);
+      return;
+    }
+
+    const unsubscribeConfig = configService.subscribeToConfig(user.uid, (data) => {
+      setConfig(data);
+    });
+
+    return () => unsubscribeConfig();
   }, [isAuthReady, user]);
 
   useEffect(() => {
@@ -310,7 +323,73 @@ export default function App() {
     return 'text-emerald-600 bg-emerald-50';
   };
 
-  const presets = BAMBU_COLORS[formData.type] || [];
+  const presets = config?.types.find(t => t.name === formData.type)?.presets || [];
+
+  const handleAddCustomType = () => {
+    if (!config) return;
+    const newType: ManagedType = {
+      id: crypto.randomUUID(),
+      name: 'Nieuw type',
+      brand: 'Bambu Lab',
+      presets: []
+    };
+    configService.saveConfig({
+      ...config,
+      types: [...config.types, newType]
+    });
+  };
+
+  const handleUpdateType = (id: string, updates: Partial<ManagedType>) => {
+    if (!config) return;
+    const updatedTypes = config.types.map(t => t.id === id ? { ...t, ...updates } : t);
+    configService.saveConfig({ ...config, types: updatedTypes });
+  };
+
+  const handleDeleteType = (id: string) => {
+    if (!config) return;
+    const updatedTypes = config.types.filter(t => t.id !== id);
+    configService.saveConfig({ ...config, types: updatedTypes });
+  };
+
+  const handleAddPreset = (typeId: string) => {
+    if (!config) return;
+    const updatedTypes = config.types.map(t => {
+      if (t.id === typeId) {
+        return {
+          ...t,
+          presets: [...t.presets, { name: 'Kleur', hex: '#666666' }]
+        };
+      }
+      return t;
+    });
+    configService.saveConfig({ ...config, types: updatedTypes });
+  };
+
+  const handleRemovePreset = (typeId: string, presetIndex: number) => {
+    if (!config) return;
+    const updatedTypes = config.types.map(t => {
+      if (t.id === typeId) {
+        const newPresets = [...t.presets];
+        newPresets.splice(presetIndex, 1);
+        return { ...t, presets: newPresets };
+      }
+      return t;
+    });
+    configService.saveConfig({ ...config, types: updatedTypes });
+  };
+
+  const handleUpdatePreset = (typeId: string, presetIndex: number, updates: Partial<ColorPreset>) => {
+    if (!config) return;
+    const updatedTypes = config.types.map(t => {
+      if (t.id === typeId) {
+        const newPresets = [...t.presets];
+        newPresets[presetIndex] = { ...newPresets[presetIndex], ...updates };
+        return { ...t, presets: newPresets };
+      }
+      return t;
+    });
+    configService.saveConfig({ ...config, types: updatedTypes });
+  };
 
   if (error) {
     return (
@@ -371,11 +450,11 @@ export default function App() {
                   <PackagePlus size={20} />
                 </button>
                 <button 
-                  onClick={() => setIsShareModalOpen(true)}
+                  onClick={() => setIsSettingsOpen(true)}
                   className="p-2.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all active:scale-95 relative"
-                  title="Delen met anderen"
+                  title="Instellingen"
                 >
-                  <UserPlus size={20} />
+                  <Settings size={20} />
                   {sharedEmails.length > 0 && (
                     <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-600 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white">
                       {sharedEmails.length}
@@ -664,10 +743,17 @@ export default function App() {
                       <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Type</label>
                       <select 
                         value={formData.type}
-                        onChange={e => setFormData({...formData, type: e.target.value as FilamentType})}
+                        onChange={e => {
+                          const selectedType = config?.types.find(t => t.name === e.target.value);
+                          setFormData({
+                            ...formData, 
+                            type: e.target.value,
+                            brand: selectedType?.brand || formData.brand
+                          });
+                        }}
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
                       >
-                        {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                        {config?.types.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
                       </select>
                     </div>
                   </div>
@@ -791,6 +877,192 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* Settings Modal */}
+      <AnimatePresence>
+        {isSettingsOpen && config && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSettingsOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
+                <div>
+                  <h2 className="text-xl font-bold">Instellingen</h2>
+                  <p className="text-sm text-gray-500">Beheer je account en collectie</p>
+                </div>
+                <button 
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-6 overflow-y-auto flex-1 space-y-10">
+                {/* Sharing Section */}
+                <section>
+                  <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <Share2 size={18} className="text-emerald-600" />
+                    Delen met anderen
+                  </h3>
+                  <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                    <p className="text-sm text-gray-500 mb-4">
+                      Voeg e-mailadressen toe van mensen die jouw voorraad mogen inzien.
+                    </p>
+                    <form onSubmit={handleAddShare} className="flex gap-2 mb-4">
+                      <div className="relative flex-1">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <input 
+                          type="email" 
+                          placeholder="e-mailadres..."
+                          value={newShareEmail}
+                          onChange={e => setNewShareEmail(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
+                        />
+                      </div>
+                      <button 
+                        type="submit"
+                        className="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-200"
+                      >
+                        Toevoegen
+                      </button>
+                    </form>
+
+                    <div className="space-y-2">
+                      {sharedEmails.map(email => (
+                        <div key={email} className="flex items-center justify-between bg-white px-4 py-2 rounded-xl border border-gray-100 group">
+                          <span className="text-sm font-medium text-gray-700">{email}</span>
+                          <button 
+                            onClick={() => handleRemoveShare(email)}
+                            className="text-gray-400 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-all"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                      {sharedEmails.length === 0 && (
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest text-center py-2">
+                          Nog geen toegang gedeeld
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </section>
+
+                {/* Types Section */}
+                <section>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                      <Disc size={18} className="text-emerald-600" />
+                      Filament Types & Presets
+                    </h3>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => user && configService.importBambuDefaults(user.uid, config)}
+                        className="text-[10px] font-black uppercase tracking-wider text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
+                      >
+                        Bambu Lab Sync
+                      </button>
+                      <button 
+                        onClick={handleAddCustomType}
+                        className="text-[10px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1"
+                      >
+                        <Plus size={12} strokeWidth={3} />
+                        Nieuw Type
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {config.types.map((type) => (
+                      <div key={type.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-200">
+                        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                          <input 
+                            type="text" 
+                            placeholder="Merk"
+                            value={type.brand}
+                            onChange={(e) => handleUpdateType(type.id, { brand: e.target.value })}
+                            className="flex-1 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 outline-none"
+                          />
+                          <input 
+                            type="text" 
+                            placeholder="Type Naam"
+                            value={type.name}
+                            onChange={(e) => handleUpdateType(type.id, { name: e.target.value })}
+                            className="flex-1 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm font-bold focus:ring-2 focus:ring-emerald-500/20 outline-none"
+                          />
+                          <button 
+                            onClick={() => handleDeleteType(type.id)}
+                            className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors shrink-0"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between px-1">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Presets</label>
+                            <button 
+                              onClick={() => handleAddPreset(type.id)}
+                              className="text-[10px] font-bold text-emerald-600 hover:underline"
+                            >
+                              Voeg Preset toe
+                            </button>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                            {type.presets.map((preset, pIdx) => (
+                              <div key={pIdx} className="group relative flex items-center gap-2 p-1 bg-white border border-gray-200 rounded-lg">
+                                <input 
+                                  type="color" 
+                                  value={preset.hex}
+                                  onChange={(e) => handleUpdatePreset(type.id, pIdx, { hex: e.target.value })}
+                                  className="w-6 h-6 p-0 border-none bg-transparent cursor-pointer rounded overflow-hidden"
+                                />
+                                <input 
+                                  type="text" 
+                                  value={preset.name}
+                                  onChange={(e) => handleUpdatePreset(type.id, pIdx, { name: e.target.value })}
+                                  className="flex-1 min-w-0 text-[10px] font-bold outline-none bg-transparent"
+                                />
+                                <button 
+                                  onClick={() => handleRemovePreset(type.id, pIdx)}
+                                  className="opacity-0 group-hover:opacity-100 absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center transition-opacity"
+                                >
+                                  <X size={10} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </div>
+
+              <div className="p-6 bg-gray-50 border-t border-gray-100">
+                <button 
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-all active:scale-95"
+                >
+                  Klaar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {deleteId !== null && (
@@ -852,7 +1124,7 @@ export default function App() {
               <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-emerald-600 text-white">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                    <LayoutGrid size={20} />
+                    <Settings size={20} />
                   </div>
                   <div>
                     <h2 className="text-xl font-bold leading-tight">Overzicht</h2>
@@ -1101,81 +1373,6 @@ export default function App() {
                 >
                   Bevestig verbruik
                 </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Share Modal */}
-      <AnimatePresence>
-        {isShareModalOpen && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsShareModalOpen(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden"
-            >
-              <div className="p-6 sm:p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold">Delen</h2>
-                  <button onClick={() => setIsShareModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                    <X size={24} />
-                  </button>
-                </div>
-
-                <p className="text-sm text-gray-500 mb-6">
-                  Deel je filament voorraad met andere Google accounts. Zij kunnen je voorraad bekijken (alleen-lezen).
-                </p>
-
-                <form onSubmit={handleAddShare} className="flex gap-2 mb-8">
-                  <div className="relative flex-1">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input 
-                      type="email" 
-                      required
-                      placeholder="email@gmail.com"
-                      value={newShareEmail}
-                      onChange={e => setNewShareEmail(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
-                    />
-                  </div>
-                  <button 
-                    type="submit"
-                    className="px-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-100"
-                  >
-                    Voeg toe
-                  </button>
-                </form>
-
-                <div className="space-y-3">
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Gedeeld met</h3>
-                  {sharedEmails.length === 0 ? (
-                    <p className="text-sm text-gray-400 italic">Nog met niemand gedeeld.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {sharedEmails.map(email => (
-                        <div key={email} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                          <span className="text-sm font-medium text-gray-700">{email}</span>
-                          <button 
-                            onClick={() => handleRemoveShare(email)}
-                            className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </div>
             </motion.div>
           </div>

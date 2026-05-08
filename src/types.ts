@@ -1,4 +1,21 @@
-export type FilamentType = 'PLA Basic' | 'PLA Matte' | 'PLA Glow' | 'PETG-HF' | 'PETG Basic' | 'PLA-CF' | 'PETG-CF' | 'TPU';
+export type FilamentType = string;
+
+export interface ColorPreset {
+  name: string;
+  hex: string;
+}
+
+export interface ManagedType {
+  id: string;
+  name: string;
+  brand: string;
+  presets: ColorPreset[];
+}
+
+export interface UserConfig {
+  uid: string;
+  types: ManagedType[];
+}
 
 export interface Filament {
   id: string;

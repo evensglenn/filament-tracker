@@ -30,12 +30,46 @@
         }
       },
       "required": ["emails"]
+    },
+    "UserConfig": {
+      "title": "User Config",
+      "description": "User specific configurations for types and presets",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "types": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "brand": { "type": "string" },
+              "presets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string" },
+                    "hex": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "required": ["uid"]
     }
   },
   "firestore": {
     "/filaments/{filamentId}": {
       "schema": "Filament",
       "description": "User's filament inventory"
+    },
+    "/userConfigs/{uid}": {
+      "schema": "UserConfig",
+      "description": "User specific settings and types"
     },
     "/shares/{ownerUid}": {
       "schema": "Share",

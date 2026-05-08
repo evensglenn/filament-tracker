@@ -451,15 +451,10 @@ export default function App() {
                 </button>
                 <button 
                   onClick={() => setIsSettingsOpen(true)}
-                  className="p-2.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all active:scale-95 relative"
+                  className="p-2.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all active:scale-95"
                   title="Instellingen"
                 >
                   <Settings size={20} />
-                  {sharedEmails.length > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-600 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white">
-                      {sharedEmails.length}
-                    </span>
-                  )}
                 </button>
                 <button 
                   onClick={handleLogout} 

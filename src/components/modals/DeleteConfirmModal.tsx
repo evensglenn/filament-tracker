@@ -1,13 +1,24 @@
+import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;
   onCancel: () => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>;
 }
 
 export function DeleteConfirmModal({ isOpen, onCancel, onConfirm }: DeleteConfirmModalProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const confirm = async () => {
+    setIsDeleting(true);
+    try {
+      await onConfirm();
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onCancel} className="sm:max-w-sm">
       <div className="p-6 sm:p-8 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center">
@@ -24,8 +35,9 @@ export function DeleteConfirmModal({ isOpen, onCancel, onConfirm }: DeleteConfir
             Annuleer
           </button>
           <button
-            onClick={onConfirm}
-            className="flex-1 px-5 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-all active:scale-[0.98]"
+            onClick={confirm}
+            disabled={isDeleting}
+            className="flex-1 px-5 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-all active:scale-[0.98] disabled:opacity-50"
           >
             Verwijder
           </button>

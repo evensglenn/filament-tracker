@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore';
 import { db, auth, paths } from '../firebase';
 import { FilamentDoc, FilamentInput, PrintItem } from '../types';
+import { codedError } from '../utils/errors';
 
 export enum OperationType {
   CREATE = 'create',
@@ -59,7 +60,17 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     path
   }
   console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  // Keep the Firebase error code (e.g. 'permission-denied'), so the UI can explain what went wrong
+  const code = typeof error === 'object' && error !== null && 'code' in error ? (error as { code: unknown }).code : undefined;
+  throw Object.assign(new Error(JSON.stringify(errInfo)), { code });
+}
+
+/**
+ * Fails right away without a connection. Firestore would otherwise keep the write waiting
+ * until the connection is back, with no sign that nothing was saved yet.
+ */
+export function requireConnection() {
+  if (!navigator.onLine) throw codedError('unavailable', 'No connection');
 }
 
 export function currentUid(): string {
@@ -96,6 +107,7 @@ export const filamentService = {
   },
 
   addFilament: async (input: FilamentInput): Promise<string> => {
+    requireConnection();
     const uid = currentUid();
     try {
       const docRef = await addDoc(paths.filaments(uid), {
@@ -110,6 +122,7 @@ export const filamentService = {
   },
 
   updateFilament: async (id: string, input: Partial<FilamentInput>): Promise<void> => {
+    requireConnection();
     const uid = currentUid();
     try {
       await updateDoc(paths.filament(uid, id), { ...input, updatedAt: serverTimestamp() });
@@ -119,6 +132,7 @@ export const filamentService = {
   },
 
   deleteFilament: async (id: string): Promise<void> => {
+    requireConnection();
     const uid = currentUid();
     try {
       await deleteDoc(paths.filament(uid, id));
@@ -132,6 +146,7 @@ export const filamentService = {
    * latest server values, so it is all-or-nothing and safe when several devices are in use.
    */
   addSpools: async (spoolsById: Record<string, number>): Promise<void> => {
+    requireConnection();
     const uid = currentUid();
     const spools = positiveAmounts(spoolsById);
     if (spools.size === 0) return;
@@ -156,6 +171,7 @@ export const filamentService = {
    * an entry to the print log, all in one transaction.
    */
   logPrint: async (gramsById: Record<string, number>): Promise<void> => {
+    requireConnection();
     const uid = currentUid();
     const usage = positiveAmounts(gramsById, Math.round);
     if (usage.size === 0) return;

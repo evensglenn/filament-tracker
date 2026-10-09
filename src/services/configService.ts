@@ -2,7 +2,7 @@ import { getDoc, onSnapshot, setDoc } from 'firebase/firestore';
 import { paths } from '../firebase';
 import { UserConfig, ManagedType } from '../types';
 import { BAMBU_COLORS } from '../constants';
-import { handleFirestoreError, OperationType } from './filamentService';
+import { handleFirestoreError, OperationType, requireConnection } from './filamentService';
 
 export const DEFAULT_BAMBU_TYPES: ManagedType[] = Object.entries(BAMBU_COLORS).map(([name, presets]) => {
   const id = name.toLowerCase().replace(/\s+/g, '-');
@@ -28,6 +28,7 @@ export const configService = {
   },
 
   async saveConfig(uid: string, config: UserConfig): Promise<void> {
+    requireConnection();
     try {
       // merge keeps the other fields of the user document
       await setDoc(paths.user(uid), { types: config.types }, { merge: true });

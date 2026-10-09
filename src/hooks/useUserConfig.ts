@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { ColorPreset, ManagedType, UserConfig } from '../types';
 import { configService, mergeBambuDefaults } from '../services/configService';
+import { useShowError } from '../components/ui/Toast';
 
 const SAVE_DELAY_MS = 600;
 
@@ -11,6 +12,7 @@ const SAVE_DELAY_MS = 600;
  */
 export function useUserConfig(user: FirebaseUser | null, isReady: boolean) {
   const [config, setConfig] = useState<UserConfig | null>(null);
+  const showError = useShowError();
   // Latest local version, including edits that are not saved yet.
   const configRef = useRef<UserConfig | null>(null);
   const uidRef = useRef<string | null>(null);
@@ -27,7 +29,11 @@ export function useUserConfig(user: FirebaseUser | null, isReady: boolean) {
     const next = configRef.current;
     if (!hasPendingChanges.current || !next) return;
     hasPendingChanges.current = false;
-    configService.saveConfig(uidRef.current!, next);
+    configService.saveConfig(uidRef.current!, next).catch(error => {
+      // Keep the edit, so the next change or closing the settings tries again
+      hasPendingChanges.current = true;
+      showError('Instellingen bewaren', error);
+    });
   };
 
   useEffect(() => {

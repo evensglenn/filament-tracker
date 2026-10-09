@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { auth } from '../firebase';
+import { useShowError } from '../components/ui/Toast';
+import { isCancelledSignIn } from '../utils/errors';
 
 export function useAuth() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const showError = useShowError();
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
@@ -19,7 +22,7 @@ export function useAuth() {
     try {
       await signInWithPopup(auth, provider);
     } catch (error) {
-      console.error('Login failed:', error);
+      if (!isCancelledSignIn(error)) showError('Inloggen', error);
     }
   };
 
@@ -27,7 +30,7 @@ export function useAuth() {
     try {
       await signOut(auth);
     } catch (error) {
-      console.error('Logout failed:', error);
+      showError('Uitloggen', error);
     }
   };
 

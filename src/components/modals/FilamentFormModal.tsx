@@ -5,6 +5,7 @@ import { filamentService } from '../../services/filamentService';
 import { spoolsToGrams } from '../../utils/filaments';
 import { isLightColor } from '../../utils/color';
 import { Modal, ModalFooter, ModalHeader, PRIMARY_BUTTON, SECONDARY_BUTTON } from '../ui/Modal';
+import { useShowError } from '../ui/Toast';
 import { ColorSwatch } from '../ui/ColorSwatch';
 
 /** The form edits the quantity in spools; it is stored in grams. */
@@ -60,18 +61,27 @@ export function FilamentFormModal({ isOpen, filament, types, onClose, onRequestD
 
 function FilamentForm({ filament, types, onClose, onRequestDelete }: Omit<FilamentFormModalProps, 'isOpen'>) {
   const [formData, setFormData] = useState<FormData>(() => filament ? toFormData(filament) : defaultFormData(types));
+  const [isSaving, setIsSaving] = useState(false);
+  const showError = useShowError();
   const isEditing = filament !== null;
   const selectedType = types.find(t => t.id === formData.typeId);
   const presets = selectedType?.presets || [];
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (filament) {
-      await filamentService.updateFilament(filament.id, toInput(formData));
-    } else {
-      await filamentService.addFilament(toInput(formData));
+    setIsSaving(true);
+    try {
+      if (filament) {
+        await filamentService.updateFilament(filament.id, toInput(formData));
+      } else {
+        await filamentService.addFilament(toInput(formData));
+      }
+      onClose();
+    } catch (error) {
+      // The form stays open with everything filled in, so saving can simply be retried
+      showError(isEditing ? 'Bewaren' : 'Toevoegen', error);
+      setIsSaving(false);
     }
-    onClose();
   };
 
   return (
@@ -222,7 +232,7 @@ function FilamentForm({ filament, types, onClose, onRequestDelete }: Omit<Filame
           </button>
         )}
         <button type="button" onClick={onClose} className={SECONDARY_BUTTON}>Annuleer</button>
-        <button type="submit" form="filament-form" className={PRIMARY_BUTTON}>
+        <button type="submit" form="filament-form" disabled={isSaving} className={PRIMARY_BUTTON}>
           {isEditing ? 'Bewaar' : 'Voeg toe'}
         </button>
       </ModalFooter>

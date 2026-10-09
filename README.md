@@ -4,19 +4,25 @@ Voorraadbeheer voor 3D-printfilament: rollen, kleuren, prints en leveringen, ges
 
 ## Lokaal draaien
 
+Aanbevolen: tegen de Firebase-emulators, met testdata en los van je echte voorraad.
+
 ```bash
 npm install
-npm run dev
+npm run dev:local
 ```
+
+Open http://localhost:5180, klik op **Inloggen met Google** en kies **Test** in het venster van de emulator. Je krijgt een testvoorraad van 11 spoelen; alles wat je doet blijft in de emulator en is weg na het stoppen (Ctrl+C).
+
+Vereist **Java 21+** voor de emulators (`brew install openjdk@21`; het script vindt de Homebrew-installatie ook zonder PATH-aanpassing).
+
+`npm run dev` start de app tegen de **echte** database: handig om iets na te kijken, maar elke wijziging is echt.
 
 ## Tests
 
 ```bash
 npm test               # unit tests
-npm run test:emulator  # ook de Firestore-tests (account, transacties, regels) tegen de Firebase-emulator; vereist Java 21+
+npm run test:emulator  # ook de Firestore-tests (account, transacties, regels) tegen de emulators
 ```
-
-Tegen de emulator ontwikkelen in plaats van tegen de echte database: start `npx firebase-tools@14 emulators:start --only auth,firestore` en daarna `VITE_USE_EMULATORS=true npm run dev`.
 
 ## Datamodel
 

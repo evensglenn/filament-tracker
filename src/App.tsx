@@ -11,6 +11,7 @@ import { useHashRoute } from './hooks/useHashRoute';
 import { isAlmostEmpty, toInventory } from './utils/filaments';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
+import { UpdateNotice } from './components/UpdateNotice';
 import { ErrorScreen, LoadingScreen, LoginScreen } from './components/StatusScreens';
 import { Toolbar } from './components/inventory/Toolbar';
 import { FilamentGrid } from './components/inventory/FilamentGrid';
@@ -139,6 +140,7 @@ export default function App() {
       <PrintModal isOpen={activeModal === 'print'} onClose={closeModal} filaments={filaments} />
 
       <Footer />
+      <UpdateNotice />
     </div>
   );
 }

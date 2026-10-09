@@ -8,7 +8,18 @@ export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
     base: './',
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      {
+        // version.json next to the app: an open app compares it to its own version (useUpdateCheck)
+        name: 'version-file',
+        apply: 'build',
+        generateBundle() {
+          this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ version: pkg.version }) });
+        },
+      },
+    ],
     publicDir: 'public',
     build: {
       outDir: 'dist',

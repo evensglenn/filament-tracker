@@ -8,7 +8,7 @@ import { useFilamentFilters } from './hooks/useFilamentFilters';
 import { useUserConfig } from './hooks/useUserConfig';
 import { useHideOnScroll } from './hooks/useHideOnScroll';
 import { LOW_STOCK_SPOOLS, toInventory } from './utils/filaments';
-import { Header, MobilePrintButton } from './components/Header';
+import { Header } from './components/Header';
 import { ErrorScreen, LoadingScreen, LoginScreen } from './components/StatusScreens';
 import { Toolbar } from './components/inventory/Toolbar';
 import { FilamentGrid } from './components/inventory/FilamentGrid';
@@ -69,13 +69,13 @@ export default function App() {
         visible={showHeader}
         isLoggedIn={!!user}
         onLogin={login}
+        onLogout={logout}
         onNewPrint={() => setActiveModal('print')}
         onNewDelivery={() => setActiveModal('delivery')}
         onOpenSettings={() => setActiveModal('settings')}
       />
 
-      {/* Extra bottom space on phones for the fixed print button */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8 pb-28 sm:pb-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
         {!isAuthReady || (user && !isReady) ? (
           <LoadingScreen />
         ) : !user ? (
@@ -91,7 +91,6 @@ export default function App() {
               onAdd={() => openForm()}
               onResetFilters={filters.resetFilters}
             />
-            <MobilePrintButton onClick={() => setActiveModal('print')} />
           </>
         )}
       </main>
@@ -124,7 +123,7 @@ export default function App() {
       <DeliveryModal isOpen={activeModal === 'delivery'} onClose={closeModal} filaments={filaments} />
       <PrintModal isOpen={activeModal === 'print'} onClose={closeModal} filaments={filaments} />
 
-      <footer className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-32 sm:pb-8 text-center">
+      <footer className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-[max(2rem,env(safe-area-inset-bottom))] text-center">
         <p className="text-xs text-gray-400">Filament tracker v{__APP_VERSION__}</p>
       </footer>
     </div>

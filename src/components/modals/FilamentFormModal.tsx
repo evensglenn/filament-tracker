@@ -177,7 +177,7 @@ function FilamentForm({ filament, types, onClose, onRequestDelete }: Omit<Filame
             <label className={LABEL_CLASS}>Gewicht per rol (g)</label>
             <input
               type="number"
-              step="50"
+              step="any"
               min="1"
               value={formData.spoolWeight}
               onChange={e => setFormData({ ...formData, spoolWeight: Number(e.target.value) })}

@@ -1,12 +1,13 @@
 import { Ref } from 'react';
 import { motion } from 'motion/react';
 import { Filament } from '../../types';
-import { formatSpools, getStockStatus, StockStatus } from '../../utils/filaments';
+import { getStockStatus, StockStatus, weightParts } from '../../utils/filaments';
 import { ColorSwatch } from '../ui/ColorSwatch';
 
-const STATUS_STYLE: Record<StockStatus, { label: string; border: string; badge: string; amount: string }> = {
-  almostEmpty: { label: 'Bijna op', border: 'border-danger-light', badge: 'text-white bg-danger', amount: 'text-danger-strong' },
-  limited: { label: 'Beperkt', border: 'border-amber-400', badge: 'text-white bg-amber-600', amount: 'text-amber-700' },
+// Soft labels in the color of the border, with dark text (light text in dark mode)
+const STATUS_STYLE: Record<StockStatus, { label: string; border: string; badge: string }> = {
+  almostEmpty: { label: 'Bijna op', border: 'border-danger-light', badge: 'text-danger bg-danger-light' },
+  limited: { label: 'Beperkt', border: 'border-warning-light', badge: 'text-warning bg-warning-light' },
 };
 
 interface FilamentCardProps {
@@ -20,6 +21,7 @@ export function FilamentCard({ filament, onEdit, ref }: FilamentCardProps) {
   // Only low stock stands out; otherwise the color swatch is the only color on the card
   const status = getStockStatus(filament.remainingGrams);
   const style = status && STATUS_STYLE[status];
+  const weight = weightParts(filament.remainingGrams);
   const showBrand = filament.brand && filament.brand !== filament.typeBrand;
 
   return (
@@ -30,7 +32,7 @@ export function FilamentCard({ filament, onEdit, ref }: FilamentCardProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       onClick={() => onEdit(filament)}
-      className={`flex flex-col text-left bg-white rounded-2xl border p-4 hover:shadow-lg hover:shadow-gray-200/60 transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${style ? style.border : 'border-gray-200'}`}
+      className={`relative overflow-hidden flex flex-col text-left bg-white dark:bg-gray-900 rounded-2xl border p-4 hover:shadow-lg hover:shadow-gray-200/60 dark:hover:shadow-black/40 transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-petrol-500 ${style ? style.border : 'border-gray-200 dark:border-gray-700'}`}
     >
       <div className="flex items-start gap-3 w-full">
         <ColorSwatch hex={filament.colorHex} name={filament.colorName} className="w-11 h-11" />
@@ -39,26 +41,20 @@ export function FilamentCard({ filament, onEdit, ref }: FilamentCardProps) {
           <h3 className="font-bold text-base leading-tight truncate" title={filament.colorName}>
             {filament.colorName.split(' (')[0]}
           </h3>
-          <p className="text-sm text-gray-500 truncate mt-0.5">
+          <p className="text-sm text-gray-500 dark:text-gray-400 truncate mt-0.5">
             {filament.typeName}{showBrand && ` · ${filament.brand}`}
           </p>
         </div>
 
-        <div className="text-right shrink-0">
-          <p className={`text-xl font-bold leading-none tabular-nums ${style ? style.amount : ''}`}>
-            {formatSpools(filament.spools)}
-            <span className="text-sm font-medium text-gray-500"> {filament.spools > 1 ? 'rollen' : 'rol'}</span>
-          </p>
-          <p className="text-xs text-gray-500 mt-1 tabular-nums">{filament.remainingGrams} g</p>
-        </div>
+        <p className="shrink-0 text-xl font-bold leading-none tabular-nums">
+          {weight.value}
+          <span className="text-sm font-medium text-gray-500 dark:text-gray-400"> {weight.unit}</span>
+        </p>
       </div>
 
+      {/* A tab in the bottom-right corner, following the card's rounded corner; it adds no height */}
       {style && (
-        <span className={`mt-2 self-start text-[13px] font-semibold px-2.5 py-0.5 rounded-full ${style.badge}`}>{style.label}</span>
-      )}
-
-      {filament.notes && (
-        <p className="mt-2 text-xs text-gray-500 italic truncate">{filament.notes}</p>
+        <span className={`absolute bottom-0 right-0 text-xs font-semibold leading-none px-3 py-1.5 rounded-tl-xl ${style.badge}`}>{style.label}</span>
       )}
     </motion.button>
   );

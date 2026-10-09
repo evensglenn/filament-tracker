@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Filament } from './types';
 import { filamentService } from './services/filamentService';
 import { useAuth } from './hooks/useAuth';
@@ -7,8 +7,10 @@ import { useFilaments } from './hooks/useFilaments';
 import { useFilamentFilters } from './hooks/useFilamentFilters';
 import { useUserConfig } from './hooks/useUserConfig';
 import { useHideOnScroll } from './hooks/useHideOnScroll';
+import { useHashRoute } from './hooks/useHashRoute';
 import { isAlmostEmpty, toInventory } from './utils/filaments';
 import { Header } from './components/Header';
+import { Footer } from './components/Footer';
 import { ErrorScreen, LoadingScreen, LoginScreen } from './components/StatusScreens';
 import { Toolbar } from './components/inventory/Toolbar';
 import { FilamentGrid } from './components/inventory/FilamentGrid';
@@ -16,10 +18,10 @@ import { FilamentFormModal } from './components/modals/FilamentFormModal';
 import { DeleteConfirmModal } from './components/modals/DeleteConfirmModal';
 import { DeliveryModal } from './components/modals/DeliveryModal';
 import { PrintModal } from './components/modals/PrintModal';
-import { SettingsModal } from './components/settings/SettingsModal';
+import { SettingsPage } from './components/settings/SettingsPage';
 import { useShowError } from './components/ui/Toast';
 
-type ActiveModal = 'form' | 'settings' | 'delivery' | 'print' | null;
+type ActiveModal = 'form' | 'delivery' | 'print' | null;
 
 export default function App() {
   const { user, isAuthReady, login, logout } = useAuth();
@@ -36,7 +38,16 @@ export default function App() {
   const filters = useFilamentFilters(filaments);
   const showHeader = useHideOnScroll();
 
+  const { route, navigate } = useHashRoute();
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
+
+  // Save pending type edits when leaving the settings page
+  const previousView = useRef(route.view);
+  useEffect(() => {
+    if (previousView.current === 'settings' && route.view !== 'settings') configActions.flush();
+    previousView.current = route.view;
+    window.scrollTo(0, 0);
+  }, [route.view]);
   const [editingFilament, setEditingFilament] = useState<Filament | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const showError = useShowError();
@@ -70,7 +81,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] text-[#111827] font-sans">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-sans">
       <Header
         visible={showHeader}
         isLoggedIn={!!user}
@@ -78,7 +89,7 @@ export default function App() {
         onLogout={logout}
         onNewPrint={() => setActiveModal('print')}
         onNewDelivery={() => setActiveModal('delivery')}
-        onOpenSettings={() => setActiveModal('settings')}
+        onOpenSettings={() => navigate({ view: 'settings' })}
       />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
@@ -86,6 +97,15 @@ export default function App() {
           <LoadingScreen />
         ) : !user ? (
           <LoginScreen onLogin={login} />
+        ) : route.view === 'settings' ? (
+          <SettingsPage
+            types={config?.types ?? []}
+            usage={typeUsage}
+            actions={configActions}
+            selectedTypeId={route.typeId}
+            onSelectType={typeId => navigate({ view: 'settings', typeId })}
+            onBack={() => navigate({ view: 'inventory' })}
+          />
         ) : (
           <>
             <Toolbar filters={filters} lowCount={lowCount} />
@@ -109,16 +129,6 @@ export default function App() {
         onRequestDelete={requestDelete}
       />
 
-      <SettingsModal
-        isOpen={activeModal === 'settings'}
-        onClose={closeModal}
-        config={config}
-        configActions={configActions}
-        typeUsage={typeUsage}
-        userEmail={user?.email ?? null}
-        onLogout={logout}
-      />
-
       <DeleteConfirmModal
         isOpen={deleteId !== null}
         onCancel={() => setDeleteId(null)}
@@ -128,9 +138,7 @@ export default function App() {
       <DeliveryModal isOpen={activeModal === 'delivery'} onClose={closeModal} filaments={filaments} />
       <PrintModal isOpen={activeModal === 'print'} onClose={closeModal} filaments={filaments} />
 
-      <footer className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-[max(2rem,env(safe-area-inset-bottom))] text-center">
-        <p className="text-xs text-gray-400">Filament tracker v{__APP_VERSION__}</p>
-      </footer>
+      <Footer />
     </div>
   );
 }

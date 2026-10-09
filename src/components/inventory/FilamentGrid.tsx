@@ -33,22 +33,22 @@ export function FilamentGrid({ filaments, hasInventory, isFiltered, onEdit, onAd
             exit={{ opacity: 0 }}
             className="col-span-full py-12 text-center"
           >
-            <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-300 mx-auto mb-4">
+            <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-2xl flex items-center justify-center text-gray-300 dark:text-gray-600 mx-auto mb-4">
               <Search size={32} />
             </div>
-            <p className="text-gray-700 font-bold">Geen resultaten gevonden</p>
-            <p className="text-sm text-gray-500 mt-1">Probeer een andere zoekterm of filter.</p>
+            <p className="text-gray-700 dark:text-gray-300 font-bold">Geen resultaten gevonden</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Probeer een andere zoekterm of filter.</p>
             {isFiltered && (
               <div className="mt-6 flex flex-col items-center gap-2">
                 <button
                   onClick={onResetFilters}
-                  className="text-emerald-600 font-bold text-sm hover:underline py-1"
+                  className="text-petrol-600 dark:text-petrol-400 font-bold text-sm hover:underline py-1"
                 >
                   Wis alle filters
                 </button>
                 <button
                   onClick={onAdd}
-                  className="text-emerald-600 font-bold text-sm hover:underline py-1"
+                  className="text-petrol-600 dark:text-petrol-400 font-bold text-sm hover:underline py-1"
                 >
                   Voeg filament toe
                 </button>
@@ -65,12 +65,12 @@ export function FilamentGrid({ filaments, hasInventory, isFiltered, onEdit, onAd
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={onAdd}
-            className="group relative flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all min-h-[104px]"
+            className="group flex items-center justify-center gap-3 p-4 rounded-2xl border border-dashed border-gray-300 dark:border-gray-600 hover:border-petrol-500 hover:bg-petrol-50/30 dark:hover:bg-petrol-950/40 transition-all"
           >
-            <div className="w-10 h-10 bg-gray-50 group-hover:bg-emerald-100 rounded-full flex items-center justify-center text-gray-400 group-hover:text-emerald-600 transition-colors mb-2">
+            <div className="w-11 h-11 bg-gray-50 dark:bg-gray-800 group-hover:bg-petrol-100 dark:group-hover:bg-petrol-900 rounded-full flex items-center justify-center text-gray-400 dark:text-gray-500 group-hover:text-petrol-600 dark:group-hover:text-petrol-400 transition-colors">
               <Plus size={20} strokeWidth={3} />
             </div>
-            <span className="text-sm font-semibold text-gray-500 group-hover:text-emerald-700 transition-colors">Filament toevoegen</span>
+            <span className="text-sm font-semibold text-gray-500 dark:text-gray-400 group-hover:text-petrol-700 dark:group-hover:text-petrol-400 transition-colors">Voeg filament toe</span>
           </motion.button>
         )}
       </AnimatePresence>

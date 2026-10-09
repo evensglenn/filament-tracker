@@ -13,7 +13,10 @@ Read this before proposing features, so you don't re-suggest what was declined o
 
 - **v3.6.1** Browser tests in the repo (`e2e/`, Playwright) and a CI workflow for pull requests; GitHub Actions on their Node 24 versions; libraries split into cached chunks and fonts loaded from index.html.
 
+- **v3.7** Stock labels as a tab in the card's bottom-right corner; weights in g/kg instead of spools; equal card heights (also "Voeg filament toe"); notes only in the edit form; imperative labels everywhere; filament types as a page instead of a dialog, without the account section; dark mode with a theme switch, the version and the Studio Evens logo in the footer; the Studio Evens house style (antraciet, kalk, petrol) in light and dark, with a matching app icon and favicon; a pulse on confirm buttons and "Log in met Google"; a soft red (soft labels with dark text) instead of bright red; the house font Sora (Light and SemiBold) instead of Inter.
+
 ## Declined by the owner
+- **Restoring the Bambu Lab colors** (a button that reset the default types and their colors): removed; the owner maintains types and colors by hand. New accounts still start with the Bambu Lab types once.
 - **Offline mode** (Firestore offline cache, service worker): not needed.
 - **Print history / usage statistics**: not needed, even though the print log exists.
 - **Sharing the inventory with other accounts**: removed on purpose; the app is single-user.

@@ -1,19 +1,129 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+/* Dark when chosen (data-theme="dark" on <html>), or when the device is dark and light wasn't chosen */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) {
+      @slot;
+    }
+  }
+}
 
-  /* One calm, deep red for everything that warns or deletes. Tailwind's red-600 looked too
-     bright next to the filament colors. */
-  --color-danger: #b91c1c;        /* icons, text, filled labels and buttons */
-  --color-danger-strong: #991b1b; /* hover on filled buttons, emphasized amounts */
-  --color-danger-light: #fca5a5;  /* borders, and icons on a dark background */
-  --color-danger-soft: #fef2f2;   /* light backgrounds and hover */
+@theme {
+  /* Sora, the house font, in its two house weights: Light for text, SemiBold for emphasis.
+     Bold and medium map onto those, so every font-* class stays within the house style. */
+  --font-sans: "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-weight-medium: 400;
+  --font-weight-bold: 600;
+
+  /* Studio Evens house style: antraciet #2A2C2E, kalk #EEECE7 and petrol #1E8A8A.
+     The grays run from kalk (page) to antraciet (text), warm and neutral instead of Tailwind's blue-gray. */
+  --color-gray-50: #eeece7;
+  --color-gray-100: #e6e4de;
+  --color-gray-200: #dcd9d2;
+  --color-gray-300: #c9c6be;
+  --color-gray-400: #9d9a93;
+  --color-gray-500: #77746e;
+  --color-gray-600: #5c5a55;
+  --color-gray-700: #45474a;
+  --color-gray-800: #36383b;
+  --color-gray-900: #2a2c2e;
+  --color-gray-950: #1f2123;
+
+  /* Petrol, the accent: buttons, links, focus, selection (600 is the brand color) */
+  --color-petrol-50: #eef8f7;
+  --color-petrol-100: #d4eeec;
+  --color-petrol-200: #a8dcda;
+  --color-petrol-300: #73c2c1;
+  --color-petrol-400: #3fa5a5;
+  --color-petrol-500: #279494;
+  --color-petrol-600: #1e8a8a;
+  --color-petrol-700: #196f6f;
+  --color-petrol-800: #175a5a;
+  --color-petrol-900: #144a4a;
+  --color-petrol-950: #0a2c2d;
+
+  /* Pulse on a button that has something to confirm, like the "voetbal-scorebord" app:
+     it swells a little and sends a ring outwards */
+  --animate-attention: attention 1.6s ease-in-out infinite;
+
+  @keyframes attention {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-petrol-600) 55%, transparent);
+    }
+    50% {
+      transform: scale(1.04);
+      box-shadow: 0 0 0 0.6rem color-mix(in srgb, var(--color-petrol-600) 0%, transparent);
+    }
+  }
+
+  /* One soft red for everything that warns or deletes: soft fills with dark red text, a deep red
+     only for filled buttons. Bright red disturbed next to the filament colors. */
+  --color-danger: #8f1d14;        /* text and icons, and the text on a soft label */
+  --color-danger-fill: #8f1d14;   /* filled buttons (with white text) */
+  --color-danger-strong: #6f150e; /* hover on filled buttons */
+  --color-danger-light: #f3c1b8;  /* borders and soft labels ("Bijna op"), icons on dark */
+  --color-danger-soft: #fbe9e5;   /* light backgrounds and hover */
+
+  /* Ochre for "Beperkt", built the same way */
+  --color-warning: #6d4c0e;
+  --color-warning-light: #ecd6a5;
+}
+
+/* Dark mode: the same red tuned for dark backgrounds, antraciet surfaces and kalk text */
+@layer base {
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --color-danger: #ffb4a6;
+    --color-danger-fill: #b4382a;
+    --color-danger-strong: #c94a3a;
+    --color-danger-light: #6b2a22;
+    --color-danger-soft: #3d1c18;
+    --color-warning: #f3dfae;
+    --color-warning-light: #5c4720;
+    /* Antraciet surfaces (cards are the brand antraciet) with kalk text */
+    --color-gray-950: #212325;
+    --color-gray-900: #2a2c2e;
+    --color-gray-800: #35383b;
+    --color-gray-700: #44474b;
+    --color-gray-600: #5f5d59;
+    --color-gray-500: #85827c;
+    --color-gray-400: #a3a09a;
+    --color-gray-300: #c4c1ba;
+    --color-gray-200: #dcd9d2;
+    --color-gray-100: #eeece7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --color-danger: #ffb4a6;
+      --color-danger-fill: #b4382a;
+      --color-danger-strong: #c94a3a;
+      --color-danger-light: #6b2a22;
+      --color-danger-soft: #3d1c18;
+      --color-warning: #f3dfae;
+      --color-warning-light: #5c4720;
+      --color-gray-950: #212325;
+      --color-gray-900: #2a2c2e;
+      --color-gray-800: #35383b;
+      --color-gray-700: #44474b;
+      --color-gray-600: #5f5d59;
+      --color-gray-500: #85827c;
+      --color-gray-400: #a3a09a;
+      --color-gray-300: #c4c1ba;
+      --color-gray-200: #dcd9d2;
+      --color-gray-100: #eeece7;
+    }
+  }
 }
 
 @layer base {
   body {
-    @apply antialiased;
+    @apply antialiased font-light;
   }
 }
 

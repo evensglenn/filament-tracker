@@ -4,14 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Filament tracker</title>
+    <script>
+      // The chosen theme is set before the app starts, so opening it never flashes the wrong one.
+      // Without a choice the app follows the device.
+      try {
+        var theme = localStorage.getItem('filament-tracker:theme');
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+    </script>
     <!-- Fonts load in parallel with the app instead of behind its CSS; only the weights in use -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600&display=swap" />
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <link rel="apple-touch-icon" href="favicon.svg" />
-    <meta name="theme-color" content="#059669" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+    <!-- iPhone home screen: needs a PNG, and rounds the corners itself -->
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <!-- Browser bar in the house style: kalk in light mode, antraciet in dark mode -->
+    <meta name="theme-color" content="#EEECE7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#2A2C2E" media="(prefers-color-scheme: dark)" />
   </head>
   <body>
     <div id="root"></div>

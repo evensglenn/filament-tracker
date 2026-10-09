@@ -59,4 +59,4 @@ for (const [i, [typeId, colorName, colorHex, grams, notes, lastUsed]] of FILAMEN
 // The user document with the default types is created by the app on first login
 
 console.log(`\n  Testdata geladen: ${FILAMENTS.length} spoelen voor ${ACCOUNT.email}.`);
-console.log(`  Open http://localhost:5180, klik op "Inloggen met Google" en kies "${ACCOUNT.name}" in het venster van de emulator.\n`);
+console.log(`  Open http://localhost:5180, klik op "Log in met Google" en kies "${ACCOUNT.name}" in het venster van de emulator.\n`);

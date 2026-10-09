@@ -26,7 +26,7 @@ export interface FilamentDoc {
   colorName: string;
   colorHex: string;
   remainingGrams: number; // Integer, total over all spools of this filament
-  spoolWeight: number; // Weight of a full spool in grams (e.g., 1000, 250)
+  spoolWeight: number; // Grams added per tap in a delivery: the weight of a new spool (e.g., 1000, 250)
   notes: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -36,11 +36,10 @@ export interface FilamentDoc {
 /** The editable fields of a filament. */
 export type FilamentInput = Pick<FilamentDoc, 'typeId' | 'brand' | 'colorName' | 'colorHex' | 'remainingGrams' | 'spoolWeight' | 'notes'>;
 
-/** A filament as shown in the UI: joined with its type and with the quantity in spools. */
+/** A filament as shown in the UI: joined with its type. */
 export interface Filament extends FilamentDoc {
   typeName: string;
   typeBrand: string;
-  spools: number;
 }
 
 /** users/{uid}/prints/{id} */

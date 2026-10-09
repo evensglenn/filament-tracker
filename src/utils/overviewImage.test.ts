@@ -5,7 +5,7 @@ import { overviewHeight } from './overviewImage';
 
 const filament = (id: string, typeName: string): Filament => ({
   id, typeId: typeName, typeName, typeBrand: 'Bambu Lab', brand: 'Bambu Lab', colorName: id, colorHex: '#000000',
-  remainingGrams: 1000, spoolWeight: 1000, spools: 1, notes: '', createdAt: Timestamp.now(), updatedAt: Timestamp.now(),
+  remainingGrams: 1000, spoolWeight: 1000, notes: '', createdAt: Timestamp.now(), updatedAt: Timestamp.now(),
 });
 
 describe('overviewHeight', () => {

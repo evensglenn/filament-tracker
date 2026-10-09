@@ -16,6 +16,8 @@ export default defineConfig({
     // The installed Google Chrome (also on GitHub's runners), so no browser download is needed
     channel: 'chrome',
     trace: 'retain-on-failure',
+    // Pulsing buttons never stand still; the app turns the pulse off for reduced motion
+    reducedMotion: 'reduce',
   },
   projects: [
     { name: 'phone', use: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 } },

@@ -2,14 +2,13 @@
   "short_name": "Filament",
   "name": "Filament tracker",
   "icons": [
-    {
-      "src": "favicon.svg",
-      "type": "image/svg+xml",
-      "sizes": "any"
-    }
+    { "src": "favicon.svg", "type": "image/svg+xml", "sizes": "any" },
+    { "src": "icons/icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "icons/icon-512.png", "type": "image/png", "sizes": "512x512" },
+    { "src": "icons/icon-maskable-512.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
   ],
   "start_url": "./",
-  "background_color": "#F9FAFB",
+  "background_color": "#EEECE7",
   "display": "standalone",
-  "theme_color": "#059669"
+  "theme_color": "#2A2C2E"
 }

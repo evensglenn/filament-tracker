@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { ColorPreset, ManagedType, UserConfig } from '../types';
-import { configService, mergeBambuDefaults } from '../services/configService';
+import { configService } from '../services/configService';
 import { useShowError } from '../components/ui/Toast';
 
 const SAVE_DELAY_MS = 600;
@@ -24,16 +24,21 @@ export function useUserConfig(user: FirebaseUser | null, isReady: boolean) {
     setConfig(next);
   };
 
-  const flush = () => {
+  /** Saves pending edits; resolves to whether that worked (true when there was nothing to save). */
+  const flush = async (what = 'Instellingen bewaren'): Promise<boolean> => {
     window.clearTimeout(saveTimer.current);
     const next = configRef.current;
-    if (!hasPendingChanges.current || !next) return;
+    if (!hasPendingChanges.current || !next) return true;
     hasPendingChanges.current = false;
-    configService.saveConfig(uidRef.current!, next).catch(error => {
-      // Keep the edit, so the next change or closing the settings tries again
+    try {
+      await configService.saveConfig(uidRef.current!, next);
+      return true;
+    } catch (error) {
+      // Keep the edit, so the next change or leaving the settings tries again
       hasPendingChanges.current = true;
-      showError('Instellingen bewaren', error);
-    });
+      showError(what, error);
+      return false;
+    }
   };
 
   useEffect(() => {
@@ -57,40 +62,39 @@ export function useUserConfig(user: FirebaseUser | null, isReady: boolean) {
 
   // Save pending edits when the tab is closed or hidden.
   useEffect(() => {
-    window.addEventListener('pagehide', flush);
-    return () => window.removeEventListener('pagehide', flush);
+    const onPageHide = () => { flush(); };
+    window.addEventListener('pagehide', onPageHide);
+    return () => window.removeEventListener('pagehide', onPageHide);
   }, []);
 
-  const saveTypes = (mapTypes: (types: ManagedType[]) => ManagedType[], immediate = false) => {
+  const saveTypes = (mapTypes: (types: ManagedType[]) => ManagedType[], immediate = false, what?: string) => {
     const current = configRef.current;
-    if (!current) return;
+    if (!current) return Promise.resolve(false);
     applyLocally({ ...current, types: mapTypes(current.types) });
     hasPendingChanges.current = true;
 
     window.clearTimeout(saveTimer.current);
-    if (immediate) {
-      flush();
-    } else {
-      saveTimer.current = window.setTimeout(flush, SAVE_DELAY_MS);
-    }
+    if (immediate) return flush(what);
+    saveTimer.current = window.setTimeout(() => { flush(); }, SAVE_DELAY_MS);
+    return Promise.resolve(true);
   };
 
   const mapPresets = (typeId: string, mapFn: (presets: ColorPreset[]) => ColorPreset[]) =>
     saveTypes(types => types.map(t => t.id === typeId ? { ...t, presets: mapFn(t.presets) } : t));
 
   const actions = {
-    addType: () => saveTypes(types => [...types, {
-      id: crypto.randomUUID(),
-      name: 'Nieuw type',
-      brand: 'Bambu Lab',
-      presets: []
-    }], true),
+    /** Adds an empty type and returns its id, so it can be opened right away. */
+    addType: () => {
+      const id = crypto.randomUUID();
+      saveTypes(types => [...types, { id, name: 'Nieuw type', brand: 'Bambu Lab', presets: [] }], true, 'Type toevoegen');
+      return id;
+    },
 
     updateType: (id: string, updates: Partial<ManagedType>) =>
       saveTypes(types => types.map(t => t.id === id ? { ...t, ...updates } : t)),
 
     deleteType: (id: string) =>
-      saveTypes(types => types.filter(t => t.id !== id), true),
+      saveTypes(types => types.filter(t => t.id !== id), true, 'Type verwijderen'),
 
     addPreset: (typeId: string) =>
       mapPresets(typeId, presets => [...presets, { id: crypto.randomUUID(), name: 'Kleur', hex: '#666666' }]),
@@ -101,10 +105,8 @@ export function useUserConfig(user: FirebaseUser | null, isReady: boolean) {
     updatePreset: (typeId: string, presetId: string, updates: Partial<ColorPreset>) =>
       mapPresets(typeId, presets => presets.map(p => p.id === presetId ? { ...p, ...updates } : p)),
 
-    importBambuDefaults: () => saveTypes(mergeBambuDefaults, true),
-
-    /** Saves pending edits right away, e.g. when the settings are closed. */
-    flush,
+    /** Saves pending edits right away, e.g. when leaving the settings. */
+    flush: () => flush(),
   };
 
   return { config, actions };

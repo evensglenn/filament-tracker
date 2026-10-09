@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Minus, PackagePlus, Plus } from 'lucide-react';
 import { Filament } from '../../types';
 import { filamentService } from '../../services/filamentService';
-import { formatSpoolsWithUnit } from '../../utils/filaments';
-import { Modal, ModalFooter, ModalHeader, PRIMARY_BUTTON, SECONDARY_BUTTON } from '../ui/Modal';
+import { formatWeight } from '../../utils/filaments';
+import { ATTENTION, Modal, ModalFooter, ModalHeader, PRIMARY_BUTTON, SECONDARY_BUTTON } from '../ui/Modal';
 import { FilamentPicker } from '../ui/FilamentPicker';
 import { useShowError } from '../ui/Toast';
 
@@ -29,7 +29,8 @@ function DeliveryContent({ onClose, filaments }: Omit<DeliveryModalProps, 'isOpe
   const [isSaving, setIsSaving] = useState(false);
   const showError = useShowError();
 
-  const totalSpools = Object.values(deliveryQuantities).reduce((sum, n) => sum + n, 0);
+  // Each tap adds the filament's delivery weight (a new spool)
+  const totalGrams = filaments.reduce((sum, f) => sum + (deliveryQuantities[f.id] || 0) * f.spoolWeight, 0);
   const change = (id: string, delta: number) =>
     setDeliveryQuantities(prev => ({ ...prev, [id]: Math.max(0, (prev[id] || 0) + delta) }));
 
@@ -47,8 +48,8 @@ function DeliveryContent({ onClose, filaments }: Omit<DeliveryModalProps, 'isOpe
   return (
     <>
       <ModalHeader
-        title="Levering registreren"
-        subtitle="Hoeveel nieuwe rollen kwamen er binnen?"
+        title="Registreer levering"
+        subtitle="Wat kwam er binnen?"
         icon={<PackagePlus size={20} />}
         onClose={onClose}
       />
@@ -60,8 +61,8 @@ function DeliveryContent({ onClose, filaments }: Omit<DeliveryModalProps, 'isOpe
         renderDetail={f => {
           const added = deliveryQuantities[f.id] || 0;
           return added > 0
-            ? <span className="text-emerald-700 font-semibold">{formatSpoolsWithUnit(f.spools)} → {formatSpoolsWithUnit(f.spools + added)}</span>
-            : formatSpoolsWithUnit(f.spools);
+            ? <span className="text-petrol-700 dark:text-petrol-400 font-semibold">{formatWeight(f.remainingGrams)} → {formatWeight(f.remainingGrams + added * f.spoolWeight)}</span>
+            : formatWeight(f.remainingGrams);
         }}
         renderControl={f => {
           const pending = deliveryQuantities[f.id] || 0;
@@ -70,18 +71,18 @@ function DeliveryContent({ onClose, filaments }: Omit<DeliveryModalProps, 'isOpe
               <button
                 onClick={() => change(f.id, -1)}
                 disabled={pending === 0}
-                aria-label={`Eén rol minder ${f.colorName}`}
-                className="w-10 h-10 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 active:scale-90 transition-all disabled:text-gray-300 disabled:hover:bg-transparent"
+                aria-label={`${formatWeight(f.spoolWeight)} minder ${f.colorName}`}
+                className="w-10 h-10 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-90 transition-all disabled:text-gray-300 dark:disabled:text-gray-600 disabled:hover:bg-transparent"
               >
                 <Minus size={18} />
               </button>
-              <span className={`w-6 text-center text-lg font-bold tabular-nums ${pending > 0 ? 'text-emerald-700' : 'text-gray-300'}`}>
-                {pending}
+              <span className={`min-w-14 text-center text-sm font-bold tabular-nums ${pending > 0 ? 'text-petrol-700 dark:text-petrol-400' : 'text-gray-300 dark:text-gray-600'}`}>
+                {pending > 0 ? `+${formatWeight(pending * f.spoolWeight)}` : '0'}
               </span>
               <button
                 onClick={() => change(f.id, 1)}
-                aria-label={`Eén rol meer ${f.colorName}`}
-                className="w-10 h-10 rounded-full flex items-center justify-center bg-emerald-50 text-emerald-700 hover:bg-emerald-100 active:scale-90 transition-all"
+                aria-label={`${formatWeight(f.spoolWeight)} meer ${f.colorName}`}
+                className="w-10 h-10 rounded-full flex items-center justify-center bg-petrol-50 dark:bg-petrol-950 text-petrol-700 dark:text-petrol-400 hover:bg-petrol-100 dark:hover:bg-petrol-900 active:scale-90 transition-all"
               >
                 <Plus size={18} />
               </button>
@@ -92,8 +93,8 @@ function DeliveryContent({ onClose, filaments }: Omit<DeliveryModalProps, 'isOpe
 
       <ModalFooter>
         <button onClick={onClose} className={SECONDARY_BUTTON}>Annuleer</button>
-        <button onClick={handleConfirm} disabled={totalSpools === 0 || isSaving} className={PRIMARY_BUTTON}>
-          {totalSpools === 0 ? 'Bewaar' : `Voeg ${totalSpools} ${totalSpools === 1 ? 'rol' : 'rollen'} toe`}
+        <button onClick={handleConfirm} disabled={totalGrams === 0 || isSaving} className={`${PRIMARY_BUTTON} ${totalGrams > 0 && !isSaving ? ATTENTION : ''}`}>
+          {totalGrams === 0 ? 'Bewaar' : `Voeg ${formatWeight(totalGrams)} toe`}
         </button>
       </ModalFooter>
     </>

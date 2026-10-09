@@ -21,7 +21,7 @@ export function ColorSwatch({ hex, name = '', className = 'w-10 h-10' }: ColorSw
   const isTransparent = TRANSPARENT_NAME.test(name);
   return (
     <span
-      className={`relative inline-block shrink-0 rounded-full overflow-hidden ring-1 ring-inset ring-black/15 ${className}`}
+      className={`relative inline-block shrink-0 rounded-full overflow-hidden ring-1 ring-inset ring-black/15 dark:ring-white/25 ${className}`}
       style={isTransparent ? CHECKERBOARD : { backgroundColor: hex }}
     >
       {isTransparent && <span className="absolute inset-0" style={{ backgroundColor: hex, opacity: 0.55 }} />}

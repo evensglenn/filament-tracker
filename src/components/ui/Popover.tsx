@@ -47,7 +47,7 @@ export function Popover({ trigger, children, className = '', panelClassName = 'w
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.97 }}
             transition={{ duration: 0.12 }}
-            className={`absolute right-0 top-full mt-2 z-[32] origin-top-right bg-white rounded-2xl shadow-xl shadow-gray-900/10 border border-gray-200 p-1.5 ${panelClassName}`}
+            className={`absolute right-0 top-full mt-2 z-[32] origin-top-right bg-white dark:bg-gray-900 rounded-2xl shadow-xl shadow-gray-900/10 dark:shadow-black/50 border border-gray-200 dark:border-gray-700 p-1.5 ${panelClassName}`}
           >
             {children(close)}
           </motion.div>
@@ -71,9 +71,9 @@ export function MenuItem({ icon, onClick, danger, trailing, children }: MenuItem
     <button
       role="menuitem"
       onClick={onClick}
-      className={`w-full h-12 px-3 flex items-center gap-3 rounded-xl text-left font-medium transition-colors ${danger ? 'text-danger hover:bg-danger-soft' : 'text-gray-800 hover:bg-gray-100'}`}
+      className={`w-full h-12 px-3 flex items-center gap-3 rounded-xl text-left font-medium transition-colors ${danger ? 'text-danger hover:bg-danger-soft' : 'text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
     >
-      {icon && <span className={danger ? 'text-danger' : 'text-gray-500'}>{icon}</span>}
+      {icon && <span className={danger ? 'text-danger' : 'text-gray-500 dark:text-gray-400'}>{icon}</span>}
       <span className="flex-1">{children}</span>
       {trailing}
     </button>

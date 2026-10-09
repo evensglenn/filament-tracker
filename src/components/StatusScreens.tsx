@@ -1,17 +1,19 @@
-import { Disc, LogIn, ShieldAlert } from 'lucide-react';
+import { LogIn, ShieldAlert } from 'lucide-react';
+import { AppIcon } from './ui/AppIcon';
+import { ATTENTION } from './ui/Modal';
 
 export function ErrorScreen({ message }: { message: string }) {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 text-center">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-800 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white dark:bg-gray-900 rounded-3xl shadow-xl p-8 text-center">
         <div className="w-16 h-16 bg-danger-soft text-danger rounded-2xl flex items-center justify-center mx-auto mb-6">
           <ShieldAlert size={32} />
         </div>
         <h2 className="text-2xl font-bold mb-4">Oeps!</h2>
-        <p className="text-gray-600 mb-8">{message}</p>
+        <p className="text-gray-600 dark:text-gray-300 mb-8">{message}</p>
         <button
           onClick={() => window.location.reload()}
-          className="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all active:scale-95"
+          className="w-full py-3 bg-petrol-600 text-white font-bold rounded-xl hover:bg-petrol-700 transition-all active:scale-95"
         >
           Probeer opnieuw
         </button>
@@ -23,8 +25,8 @@ export function ErrorScreen({ message }: { message: string }) {
 export function LoadingScreen() {
   return (
     <div className="flex flex-col items-center justify-center py-20">
-      <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
-      <p className="text-gray-500 font-medium">Laden...</p>
+      <div className="w-12 h-12 border-4 border-petrol-500/20 border-t-petrol-500 rounded-full animate-spin mb-4"></div>
+      <p className="text-gray-500 dark:text-gray-400 font-medium">Laden...</p>
     </div>
   );
 }
@@ -32,19 +34,17 @@ export function LoadingScreen() {
 export function LoginScreen({ onLogin }: { onLogin: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center text-emerald-600 mb-6">
-        <Disc size={40} />
-      </div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">Welkom bij Filament Tracker</h2>
-      <p className="text-gray-500 max-w-md mb-8">
+      <AppIcon className="w-20 h-20 mb-6" />
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Welkom bij Filament tracker</h2>
+      <p className="text-gray-500 dark:text-gray-400 max-w-md mb-8">
         Log in om je filament voorraad te beheren en te synchroniseren tussen al je apparaten.
       </p>
       <button
         onClick={onLogin}
-        className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-3 transition-all active:scale-95 shadow-lg shadow-emerald-200"
+        className={`bg-petrol-600 hover:bg-petrol-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-3 transition-all active:scale-95 shadow-lg shadow-petrol-200 dark:shadow-petrol-950 ${ATTENTION}`}
       >
         <LogIn size={20} />
-        Inloggen met Google
+        Log in met Google
       </button>
     </div>
   );

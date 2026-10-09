@@ -2,13 +2,12 @@ import { FormEvent, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Filament, FilamentInput, ManagedType } from '../../types';
 import { filamentService } from '../../services/filamentService';
-import { spoolsToGrams } from '../../utils/filaments';
-import { Modal, ModalFooter, ModalHeader, PRIMARY_BUTTON, SECONDARY_BUTTON } from '../ui/Modal';
+import { formatWeight } from '../../utils/filaments';
+import { ATTENTION, Modal, ModalFooter, ModalHeader, PRIMARY_BUTTON, SECONDARY_BUTTON } from '../ui/Modal';
 import { useShowError } from '../ui/Toast';
 import { ColorSwatch } from '../ui/ColorSwatch';
 
-/** The form edits the quantity in spools; it is stored in grams. */
-type FormData = Omit<FilamentInput, 'remainingGrams'> & { spools: number };
+type FormData = FilamentInput;
 
 const defaultFormData = (types: ManagedType[]): FormData => {
   const type = types.find(t => t.name === 'PLA Basic') ?? types[0];
@@ -17,7 +16,7 @@ const defaultFormData = (types: ManagedType[]): FormData => {
     brand: type?.brand ?? 'Bambu Lab',
     colorName: '',
     colorHex: '#000000',
-    spools: 1,
+    remainingGrams: 1000,
     spoolWeight: 1000,
     notes: ''
   };
@@ -28,18 +27,16 @@ const toFormData = (filament: Filament): FormData => ({
   brand: filament.brand,
   colorName: filament.colorName,
   colorHex: filament.colorHex,
-  spools: Number(filament.spools.toFixed(3)),
+  remainingGrams: filament.remainingGrams,
   spoolWeight: filament.spoolWeight || 1000,
   notes: filament.notes || ''
 });
 
-const toInput = ({ spools, ...rest }: FormData): FilamentInput => ({
-  ...rest,
-  remainingGrams: spoolsToGrams(spools, rest.spoolWeight)
-});
+// Grams are stored as whole numbers
+const toInput = (data: FormData): FilamentInput => ({ ...data, remainingGrams: Math.max(0, Math.round(data.remainingGrams)) });
 
-const INPUT_CLASS = 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all';
-const LABEL_CLASS = 'block text-sm font-medium text-gray-700 mb-1.5';
+const INPUT_CLASS = 'w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-petrol-500/20 focus:border-petrol-500 outline-none transition-all';
+const LABEL_CLASS = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5';
 
 interface FilamentFormModalProps {
   isOpen: boolean;
@@ -59,7 +56,10 @@ export function FilamentFormModal({ isOpen, filament, types, onClose, onRequestD
 }
 
 function FilamentForm({ filament, types, onClose, onRequestDelete }: Omit<FilamentFormModalProps, 'isOpen'>) {
-  const [formData, setFormData] = useState<FormData>(() => filament ? toFormData(filament) : defaultFormData(types));
+  const [initialData] = useState<FormData>(() => filament ? toFormData(filament) : defaultFormData(types));
+  const [formData, setFormData] = useState<FormData>(initialData);
+  // Something to save: a change to an existing filament, or a color name for a new one
+  const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialData) && formData.colorName.trim() !== '';
   const [isSaving, setIsSaving] = useState(false);
   const showError = useShowError();
   const isEditing = filament !== null;
@@ -85,7 +85,7 @@ function FilamentForm({ filament, types, onClose, onRequestDelete }: Omit<Filame
 
   return (
     <>
-      <ModalHeader title={isEditing ? 'Filament bewerken' : 'Filament toevoegen'} onClose={onClose} />
+      <ModalHeader title={isEditing ? 'Bewerk filament' : 'Voeg filament toe'} onClose={onClose} />
 
       <form id="filament-form" onSubmit={handleSubmit} className="px-5 sm:px-6 py-5 overflow-y-auto flex-1 space-y-5">
         <div className="grid grid-cols-2 gap-3">
@@ -134,7 +134,7 @@ function FilamentForm({ filament, types, onClose, onRequestDelete }: Omit<Filame
                     type="button"
                     onClick={() => setFormData({ ...formData, colorName: preset.name, colorHex: preset.hex })}
                     // A dark ring with white space around it reads on every color, also white and green
-                    className={`flex w-9 h-9 rounded-full transition-transform ${isSelected ? 'ring-2 ring-gray-900 ring-offset-2' : 'hover:scale-110'}`}
+                    className={`flex w-9 h-9 rounded-full transition-transform ${isSelected ? 'ring-2 ring-gray-900 dark:ring-gray-100 ring-offset-2' : 'hover:scale-110'}`}
                     title={preset.name}
                     aria-label={preset.name}
                     aria-pressed={isSelected}
@@ -161,7 +161,7 @@ function FilamentForm({ filament, types, onClose, onRequestDelete }: Omit<Filame
           </label>
           <label className="shrink-0">
             <span className="sr-only">Eigen kleur</span>
-            <span className="relative block w-[46px] h-[46px] rounded-xl border border-gray-200 bg-gray-50 p-1.5 cursor-pointer" title="Kies een eigen kleur">
+            <span className="relative block w-[46px] h-[46px] rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-1.5 cursor-pointer" title="Kies een eigen kleur">
               <ColorSwatch hex={formData.colorHex} name={formData.colorName} className="w-full h-full" />
               <input
                 type="color"
@@ -175,20 +175,23 @@ function FilamentForm({ filament, types, onClose, onRequestDelete }: Omit<Filame
 
         <div className="grid grid-cols-2 gap-3">
           <label>
-            <span className={LABEL_CLASS}>Aantal rollen</span>
-            <input
-              type="number"
-              inputMode="decimal"
-              step="any"
-              min="0"
-              value={formData.spools}
-              onChange={e => setFormData({ ...formData, spools: Number(e.target.value) })}
-              className={`${INPUT_CLASS} font-semibold`}
-            />
-            <span className="block text-xs text-gray-500 mt-1">= {spoolsToGrams(formData.spools, formData.spoolWeight)} g</span>
+            <span className={LABEL_CLASS}>Voorraad</span>
+            <span className="relative block">
+              <input
+                type="number"
+                inputMode="numeric"
+                step="any"
+                min="0"
+                value={formData.remainingGrams}
+                onChange={e => setFormData({ ...formData, remainingGrams: Number(e.target.value) })}
+                className={`${INPUT_CLASS} font-semibold pr-8`}
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 dark:text-gray-500 pointer-events-none">g</span>
+            </span>
+            {formData.remainingGrams >= 1000 && <span className="block text-xs text-gray-500 dark:text-gray-400 mt-1">= {formatWeight(formData.remainingGrams)}</span>}
           </label>
           <label>
-            <span className={LABEL_CLASS}>Gewicht per rol</span>
+            <span className={LABEL_CLASS}>Gewicht per levering</span>
             <span className="relative block">
               <input
                 type="number"
@@ -199,8 +202,9 @@ function FilamentForm({ filament, types, onClose, onRequestDelete }: Omit<Filame
                 onChange={e => setFormData({ ...formData, spoolWeight: Number(e.target.value) })}
                 className={`${INPUT_CLASS} font-semibold pr-8`}
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">g</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 dark:text-gray-500 pointer-events-none">g</span>
             </span>
+            <span className="block text-xs text-gray-500 dark:text-gray-400 mt-1">Komt erbij per tik in Registreer levering</span>
           </label>
         </div>
 
@@ -223,13 +227,13 @@ function FilamentForm({ filament, types, onClose, onRequestDelete }: Omit<Filame
             onClick={() => onRequestDelete(filament.id)}
             aria-label="Verwijder filament"
             title="Verwijder filament"
-            className="w-12 shrink-0 flex items-center justify-center text-danger border border-gray-200 rounded-xl hover:bg-danger-soft hover:border-danger-light transition-colors"
+            className="w-12 shrink-0 flex items-center justify-center text-danger border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-danger-soft hover:border-danger-light transition-colors"
           >
             <Trash2 size={18} />
           </button>
         )}
         <button type="button" onClick={onClose} className={SECONDARY_BUTTON}>Annuleer</button>
-        <button type="submit" form="filament-form" disabled={isSaving} className={PRIMARY_BUTTON}>
+        <button type="submit" form="filament-form" disabled={isSaving} className={`${PRIMARY_BUTTON} ${hasChanges && !isSaving ? ATTENTION : ''}`}>
           {isEditing ? 'Bewaar' : 'Voeg toe'}
         </button>
       </ModalFooter>

@@ -12,17 +12,17 @@ Everything a user owns lives under `users/{uid}`; rules allow only the owner (`f
 | `users/{uid}/filaments/{id}` | `typeId`, `brand`, `colorName`, `colorHex`, `remainingGrams` (int, total over all spools), `spoolWeight` (g per full spool), `notes`, `createdAt`, `updatedAt` (server timestamp), `lastUsedAt` (only set by prints) |
 | `users/{uid}/prints/{id}` | Append-only log `{ createdAt, items: [{ filamentId, typeId, colorName, colorHex, grams }] }`, written in the same transaction as the usage |
 
-- Spools are derived: `remainingGrams / spoolWeight`. The form edits spools and converts back with `spoolsToGrams` (rounded).
+- The UI shows weights only (`formatWeight`); the form edits `remainingGrams` directly. `spoolWeight` is what one tap adds in a delivery.
 - A filament refers to its type by `typeId`; renaming a type is one change in settings. Types in use can't be deleted.
 - Prints and deliveries run as transactions on the server values (`filamentService.logPrint`, `addSpools`), so two devices can't lose each other's updates.
 - The old v1 collections (`filaments`, `userConfigs`, `shares`) were migrated and are closed by the rules.
 
 ## Code map
 - `src/App.tsx` - wires hooks, header, toolbar, grid and modals.
-- `src/hooks/` - `useAuth`, `useAccountSetup` (creates the user doc with defaults), `useFilaments`, `useUserConfig` (debounced saves, flush on close), `useFilamentFilters`, `useOverviewImage` (+ `shareOrSave`, `canShareFiles`), `useHideOnScroll`.
-- `src/services/` - `filamentService` (CRUD, transactions, `requireConnection`, `handleFirestoreError` keeps the Firebase error `code`), `configService` (types, `DEFAULT_BAMBU_TYPES`, `mergeBambuDefaults`).
+- `src/hooks/` - `useAuth`, `useAccountSetup` (creates the user doc with defaults), `useFilaments`, `useUserConfig` (debounced saves, flush on close), `useFilamentFilters`, `useOverviewImage` (+ `shareOrSave`, `canShareFiles`), `useHideOnScroll`, `useHashRoute` (pages in the address: `#instellingen`, `#instellingen/<typeId>`, so the back button works).
+- `src/services/` - `filamentService` (CRUD, transactions, `requireConnection`, `handleFirestoreError` keeps the Firebase error `code`), `configService` (types; `DEFAULT_BAMBU_TYPES` seed a new account once).
 - `src/utils/` - `filaments.ts` (conversions, stock levels, filter/sort, `toInventory` joins type names), `color.ts` (`getHue`, `isLightColor`), `overviewImage.ts` (canvas drawing of the share image), `errors.ts` (`describeError` in Dutch).
-- `src/components/` - `Header` (☰ menu on phones), `inventory/` (Toolbar, FilamentGrid, FilamentCard), `modals/` (form, delete, print, delivery), `settings/`, `ui/` (`Modal` with Escape/focus trap/scroll lock, `Popover`, `Toast`, `ColorSwatch`, `FilamentPicker`).
+- `src/components/` - `Header` (☰ menu on phones), `inventory/` (Toolbar, FilamentGrid, FilamentCard), `modals/` (form, delete, print, delivery), `settings/SettingsPage` (filament types as a page at `#instellingen`, list and editor side by side on large screens), `ui/` (`Modal` with Escape/focus trap/scroll lock, `Popover`, `Toast`, `ColorSwatch`, `FilamentPicker`).
 - `scripts/` - `emulators.mjs` (runs dev or tests against the emulators), `seed-emulator.mjs`.
 
 ## Tests

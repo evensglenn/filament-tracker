@@ -86,7 +86,7 @@ export function Modal({ isOpen, onClose, className = '', zIndex = 'z-[60]', chil
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 40 }}
             transition={{ type: 'spring', damping: 30, stiffness: 350 }}
-            className={`relative w-full bg-white shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[90vh] rounded-t-3xl sm:rounded-3xl outline-none ${className}`}
+            className={`relative w-full bg-white dark:bg-gray-900 shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[90vh] rounded-t-3xl sm:rounded-3xl outline-none ${className}`}
           >
             {children}
           </motion.div>
@@ -105,17 +105,17 @@ interface ModalHeaderProps {
 
 export function ModalHeader({ title, subtitle, icon, onClose }: ModalHeaderProps) {
   return (
-    <div className="px-5 sm:px-6 pt-5 pb-4 border-b border-gray-100 flex items-center gap-3 shrink-0">
+    <div className="px-5 sm:px-6 pt-5 pb-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3 shrink-0">
       {icon && (
-        <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+        <div className="w-10 h-10 rounded-xl bg-petrol-50 dark:bg-petrol-950 text-petrol-600 dark:text-petrol-400 flex items-center justify-center shrink-0">
           {icon}
         </div>
       )}
       <div className="min-w-0 flex-1">
         <h2 className="text-lg font-bold leading-tight">{title}</h2>
-        {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
+        {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>}
       </div>
-      <button onClick={onClose} aria-label="Sluiten" className="p-2 -mr-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors">
+      <button onClick={onClose} aria-label="Sluit" className="p-2 -mr-2 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
         <X size={20} />
       </button>
     </div>
@@ -125,11 +125,14 @@ export function ModalHeader({ title, subtitle, icon, onClose }: ModalHeaderProps
 /** Sticky action bar at the bottom of a modal, clear of the phone's home indicator. */
 export function ModalFooter({ children }: { children: ReactNode }) {
   return (
-    <div className="px-5 sm:px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-white border-t border-gray-100 flex gap-3 shrink-0">
+    <div className="px-5 sm:px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 flex gap-3 shrink-0">
       {children}
     </div>
   );
 }
 
-export const SECONDARY_BUTTON = 'flex-1 px-5 py-3 border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-all active:scale-[0.98]';
-export const PRIMARY_BUTTON = 'flex-[2] px-5 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100';
+export const SECONDARY_BUTTON = 'flex-1 px-5 py-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-[0.98]';
+/** Add to a primary button while it has something to confirm; off for people who prefer less motion. */
+export const ATTENTION = 'motion-safe:animate-attention';
+
+export const PRIMARY_BUTTON = 'flex-[2] px-5 py-3 bg-petrol-600 text-white font-bold rounded-xl hover:bg-petrol-700 transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100';

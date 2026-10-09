@@ -20,7 +20,7 @@ page.on('console', m => m.type() === 'error' && errors.push(m.text()));
 
 await page.goto('http://localhost:5180/');
 await page.waitForTimeout(1500);                       // let Vite load before clicking
-const [popup] = await Promise.all([page.waitForEvent('popup'), page.getByText('Inloggen met Google').click()]);
+const [popup] = await Promise.all([page.waitForEvent('popup'), page.getByText('Log in met Google').click()]);
 await popup.waitForLoadState();
 await popup.waitForTimeout(500);                       // clicking too early in the emulator popup silently fails
 await popup.getByText('test@example.com').first().click();
@@ -31,7 +31,7 @@ If a run times out on sign-in, suspect the script timing first (the popup or Vit
 
 ## Useful checks
 - **Widths**: 360 and 390 (phones) and 1280 (desktop). Check `document.documentElement.scrollWidth - innerWidth === 0` for overflow and that the `h1` isn't truncated.
-- **Phone actions** are in the ☰ menu: `getByRole('button', { name: 'Menu', exact: true })`, then `getByRole('menuitem', { name: 'Print registreren' })`.
+- **Phone actions** are in the ☰ menu: `getByRole('button', { name: 'Menu', exact: true })`, then `getByRole('menuitem', { name: 'Registreer print' })`.
 - **Dialogs** animate out for about 0.5 s; wait before asserting that `getByRole('dialog')` is gone.
 - **Errors**: `ctx.setOffline(true)` makes writes fail fast; expect a `role="alert"` toast and the dialog to stay open with its input.
 - **Sharing**: stub it in `addInitScript` (`navigator.canShare = () => true; navigator.share = async ({ files }) => { window.__shared = … }`) to capture the PNG, or set `navigator.canShare = undefined` and expect a `download` event.

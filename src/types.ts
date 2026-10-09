@@ -39,6 +39,7 @@ export type FilamentInput = Pick<FilamentDoc, 'typeId' | 'brand' | 'colorName' |
 /** A filament as shown in the UI: joined with its type and with the quantity in spools. */
 export interface Filament extends FilamentDoc {
   typeName: string;
+  typeBrand: string;
   spools: number;
 }
 

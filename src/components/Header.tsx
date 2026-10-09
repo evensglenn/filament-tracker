@@ -1,17 +1,18 @@
 import { motion } from 'motion/react';
-import { Disc, LogIn, LogOut, PackagePlus, Printer, Settings } from 'lucide-react';
+import { Disc, LogIn, PackagePlus, Printer, Settings } from 'lucide-react';
 
 interface HeaderProps {
   visible: boolean;
   isLoggedIn: boolean;
   onLogin: () => void;
-  onLogout: () => void;
   onNewPrint: () => void;
   onNewDelivery: () => void;
   onOpenSettings: () => void;
 }
 
-export function Header({ visible, isLoggedIn, onLogin, onLogout, onNewPrint, onNewDelivery, onOpenSettings }: HeaderProps) {
+const ICON_BUTTON = 'w-11 h-11 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors';
+
+export function Header({ visible, isLoggedIn, onLogin, onNewPrint, onNewDelivery, onOpenSettings }: HeaderProps) {
   return (
     <motion.header
       variants={{
@@ -20,60 +21,60 @@ export function Header({ visible, isLoggedIn, onLogin, onLogout, onNewPrint, onN
       }}
       animate={visible ? "visible" : "hidden"}
       transition={{ duration: 0.35, ease: "easeInOut" }}
-      className="bg-white border-b border-gray-200 sticky top-0 z-40"
+      className="bg-white/90 backdrop-blur border-b border-gray-200 sticky top-0 z-40"
     >
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-200">
-            <Disc size={24} />
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center text-white shrink-0">
+            <Disc size={20} />
           </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight">Filament tracker</h1>
-          </div>
+          <h1 className="text-lg font-bold tracking-tight whitespace-nowrap">Filament tracker</h1>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-1">
           {isLoggedIn ? (
             <>
+              {/* On phones the print button lives at the bottom of the screen */}
               <button
                 onClick={onNewPrint}
-                className="p-2.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all active:scale-95"
-                title="Nieuwe print"
+                className="hidden sm:flex items-center gap-2 h-11 px-4 mr-1 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-colors"
               >
-                <Printer size={20} />
+                <Printer size={18} />
+                Print registreren
               </button>
-              <button
-                onClick={onNewDelivery}
-                className="p-2.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all active:scale-95"
-                title="Snel toevoegen"
-              >
+              <button onClick={onNewDelivery} className={ICON_BUTTON} title="Levering registreren" aria-label="Levering registreren">
                 <PackagePlus size={20} />
               </button>
-              <button
-                onClick={onOpenSettings}
-                className="p-2.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all active:scale-95"
-                title="Instellingen"
-              >
+              <button onClick={onOpenSettings} className={ICON_BUTTON} title="Instellingen" aria-label="Instellingen">
                 <Settings size={20} />
-              </button>
-              <button
-                onClick={onLogout}
-                className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all active:scale-95"
-                title="Uitloggen"
-              >
-                <LogOut size={20} />
               </button>
             </>
           ) : (
             <button
               onClick={onLogin}
-              className="bg-white border border-gray-200 hover:border-emerald-500 text-gray-700 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all active:scale-95 shadow-sm"
+              className="h-11 px-4 bg-white border border-gray-200 hover:border-gray-300 text-gray-700 rounded-xl font-semibold flex items-center gap-2 transition-colors"
             >
-              <LogIn size={20} className="text-emerald-600" />
+              <LogIn size={18} className="text-emerald-600" />
               <span>Inloggen</span>
             </button>
           )}
         </div>
       </div>
     </motion.header>
+  );
+}
+
+/** Primary action on phones: always within thumb reach at the bottom of the screen. */
+export function MobilePrintButton({ onClick }: { onClick: () => void }) {
+  return (
+    <div className="sm:hidden fixed inset-x-0 bottom-0 z-30 px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-[#F9FAFB] via-[#F9FAFB]/90 to-transparent pointer-events-none">
+      <button
+        onClick={onClick}
+        className="pointer-events-auto w-full h-14 flex items-center justify-center gap-2 bg-emerald-600 text-white text-base font-bold rounded-2xl shadow-lg shadow-emerald-600/25 active:scale-[0.98] transition-transform"
+      >
+        <Printer size={20} />
+        Print registreren
+      </button>
+    </div>
   );
 }

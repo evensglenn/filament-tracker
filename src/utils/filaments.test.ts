@@ -81,3 +81,13 @@ describe('filterAndSortFilaments', () => {
     expect(ids(filterAndSortFilaments(inventory, '', 'All', 'color', 'asc'))).toEqual(['a', 'b', 'c']);
   });
 });
+
+describe('isLightColor', () => {
+  it('tells light from dark colors', async () => {
+    const { isLightColor } = await import('./color');
+    expect(isLightColor('#FFFFFF')).toBe(true);
+    expect(isLightColor('#FDB913')).toBe(true);
+    expect(isLightColor('#D0112B')).toBe(false);
+    expect(isLightColor('#1A1A1A')).toBe(false);
+  });
+});

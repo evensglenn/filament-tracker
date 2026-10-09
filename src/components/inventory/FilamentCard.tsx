@@ -1,61 +1,71 @@
 import { Ref } from 'react';
 import { motion } from 'motion/react';
-import { Disc } from 'lucide-react';
 import { Filament } from '../../types';
-import { formatSpools, getQuantityColor } from '../../utils/filaments';
+import { formatSpools, getStockLevel, StockLevel } from '../../utils/filaments';
+import { ColorSwatch } from '../ui/ColorSwatch';
+
+const BAR_COLOR: Record<StockLevel, string> = {
+  low: 'bg-red-500',
+  medium: 'bg-amber-400',
+  ok: 'bg-emerald-500',
+};
 
 interface FilamentCardProps {
   filament: Filament;
   onEdit: (filament: Filament) => void;
   /** Forwarded so AnimatePresence's popLayout mode can measure the card. */
-  ref?: Ref<HTMLDivElement>;
+  ref?: Ref<HTMLButtonElement>;
 }
 
 export function FilamentCard({ filament, onEdit, ref }: FilamentCardProps) {
+  const level = getStockLevel(filament.spools);
+  // The bar shows how full the last spool is; with a spool or more in stock it stays full
+  const fill = Math.min(filament.spools, 1) * 100;
+  const showBrand = filament.brand && filament.brand !== filament.typeBrand;
+
   return (
-    <motion.div
+    <motion.button
       ref={ref}
       layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       onClick={() => onEdit(filament)}
-      className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all group flex cursor-pointer"
+      className={`flex flex-col text-left bg-white rounded-2xl border p-4 hover:shadow-lg hover:shadow-gray-200/60 transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${level === 'low' ? 'border-red-200' : 'border-gray-200'}`}
     >
-      <div className="flex-1 p-4 min-w-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <div
-            className="w-12 h-12 rounded-full border-4 border-gray-50 shadow-inner shrink-0"
-            style={{ backgroundColor: filament.colorHex }}
-          />
-          <div className="min-w-0">
-            <h3 className="font-bold text-lg leading-tight truncate" title={filament.colorName}>
-              {filament.colorName.split(' (')[0]}
-            </h3>
-            <div className="mt-1 flex flex-wrap gap-1">
-              <span className="text-[10px] font-bold px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded uppercase tracking-wider inline-block">
-                {filament.typeName}
-              </span>
-            </div>
-            <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest mt-0.5 truncate">
-              {filament.brand}
-            </p>
-          </div>
+      <div className="flex items-start gap-3 w-full">
+        <ColorSwatch hex={filament.colorHex} name={filament.colorName} className="w-11 h-11" />
+
+        <div className="min-w-0 flex-1">
+          <h3 className="font-bold text-base leading-tight truncate" title={filament.colorName}>
+            {filament.colorName.split(' (')[0]}
+          </h3>
+          <p className="text-sm text-gray-500 truncate mt-0.5">
+            {filament.typeName}{showBrand && ` · ${filament.brand}`}
+          </p>
         </div>
 
-        {filament.notes && (
-          <div className="mt-3 text-[10px] text-gray-400 italic line-clamp-1">
-            {filament.notes}
-          </div>
+        <div className="text-right shrink-0">
+          <p className="text-xl font-bold leading-none tabular-nums">
+            {formatSpools(filament.spools)}
+            <span className="text-sm font-medium text-gray-500"> {filament.spools > 1 ? 'rollen' : 'rol'}</span>
+          </p>
+          <p className="text-xs text-gray-500 mt-1 tabular-nums">{filament.remainingGrams} g</p>
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center gap-2 w-full">
+        <div className="h-1.5 flex-1 bg-gray-100 rounded-full overflow-hidden">
+          <div className={`h-full rounded-full ${BAR_COLOR[level]}`} style={{ width: `${fill}%` }} />
+        </div>
+        {level === 'low' && (
+          <span className="text-xs font-semibold text-red-700 bg-red-50 px-2 py-0.5 rounded-full shrink-0">Bijna op</span>
         )}
       </div>
 
-      <div className={`w-14 flex flex-col items-center justify-center gap-1 transition-all shrink-0 ${getQuantityColor(filament.spools)}`}
-        title={`${filament.remainingGrams} g`}
-      >
-        <Disc size={18} />
-        <p className="text-xl font-black leading-none">{formatSpools(filament.spools)}</p>
-      </div>
-    </motion.div>
+      {filament.notes && (
+        <p className="mt-2 text-xs text-gray-500 italic truncate">{filament.notes}</p>
+      )}
+    </motion.button>
   );
 }

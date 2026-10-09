@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Minus, PackagePlus, Plus } from 'lucide-react';
 import { Filament } from '../../types';
-import { formatSpools } from '../../utils/filaments';
 import { filamentService } from '../../services/filamentService';
-import { Modal, ModalBanner, WIDE_MODAL_CLASS } from '../ui/Modal';
-import { SwatchCard, SWATCH_GRID_CLASS } from '../ui/SwatchCard';
+import { formatSpoolsWithUnit } from '../../utils/filaments';
+import { Modal, ModalFooter, ModalHeader, PRIMARY_BUTTON, SECONDARY_BUTTON } from '../ui/Modal';
+import { FilamentPicker } from '../ui/FilamentPicker';
+
+const byName = (a: Filament, b: Filament) => a.colorName.localeCompare(b.colorName);
 
 interface DeliveryModalProps {
   isOpen: boolean;
@@ -15,7 +17,7 @@ interface DeliveryModalProps {
 /** Register a delivery: add whole spools to several filaments at once. */
 export function DeliveryModal({ isOpen, onClose, filaments }: DeliveryModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className={WIDE_MODAL_CLASS}>
+    <Modal isOpen={isOpen} onClose={onClose} className="sm:max-w-xl">
       <DeliveryContent onClose={onClose} filaments={filaments} />
     </Modal>
   );
@@ -23,69 +25,75 @@ export function DeliveryModal({ isOpen, onClose, filaments }: DeliveryModalProps
 
 function DeliveryContent({ onClose, filaments }: Omit<DeliveryModalProps, 'isOpen'>) {
   const [deliveryQuantities, setDeliveryQuantities] = useState<Record<string, number>>({});
+  const [isSaving, setIsSaving] = useState(false);
+
+  const totalSpools = Object.values(deliveryQuantities).reduce((sum, n) => sum + n, 0);
+  const change = (id: string, delta: number) =>
+    setDeliveryQuantities(prev => ({ ...prev, [id]: Math.max(0, (prev[id] || 0) + delta) }));
 
   const handleConfirm = async () => {
+    setIsSaving(true);
     try {
       await filamentService.addSpools(deliveryQuantities);
       onClose();
     } catch (error) {
       console.error('Failed to confirm delivery:', error);
+      setIsSaving(false);
     }
   };
 
   return (
     <>
-      <ModalBanner icon={<PackagePlus size={20} />} title="Nieuwe levering" color="bg-emerald-600" onClose={onClose} />
+      <ModalHeader
+        title="Levering registreren"
+        subtitle="Hoeveel nieuwe rollen kwamen er binnen?"
+        icon={<PackagePlus size={20} />}
+        onClose={onClose}
+      />
 
-      <div className="p-6 overflow-y-auto flex-1 bg-gray-50">
-        <div className={SWATCH_GRID_CLASS}>
-          {filaments.map(f => {
-            const pendingQty = deliveryQuantities[f.id] || 0;
-            return (
-              <SwatchCard key={f.id} filament={f}>
-                <p className="text-[10px] font-bold text-gray-400 mt-1">
-                  Huidig: {formatSpools(f.spools)}
-                </p>
+      <FilamentPicker
+        filaments={filaments}
+        sort={byName}
+        isActive={f => (deliveryQuantities[f.id] || 0) > 0}
+        renderDetail={f => {
+          const added = deliveryQuantities[f.id] || 0;
+          return added > 0
+            ? <span className="text-emerald-700 font-semibold">{formatSpoolsWithUnit(f.spools)} → {formatSpoolsWithUnit(f.spools + added)}</span>
+            : formatSpoolsWithUnit(f.spools);
+        }}
+        renderControl={f => {
+          const pending = deliveryQuantities[f.id] || 0;
+          return (
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                onClick={() => change(f.id, -1)}
+                disabled={pending === 0}
+                aria-label={`Eén rol minder ${f.colorName}`}
+                className="w-10 h-10 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 active:scale-90 transition-all disabled:text-gray-300 disabled:hover:bg-transparent"
+              >
+                <Minus size={18} />
+              </button>
+              <span className={`w-6 text-center text-lg font-bold tabular-nums ${pending > 0 ? 'text-emerald-700' : 'text-gray-300'}`}>
+                {pending}
+              </span>
+              <button
+                onClick={() => change(f.id, 1)}
+                aria-label={`Eén rol meer ${f.colorName}`}
+                className="w-10 h-10 rounded-full flex items-center justify-center bg-emerald-50 text-emerald-700 hover:bg-emerald-100 active:scale-90 transition-all"
+              >
+                <Plus size={18} />
+              </button>
+            </div>
+          );
+        }}
+      />
 
-                <div className="mt-2 flex items-center justify-center gap-3">
-                  <button
-                    onClick={() => setDeliveryQuantities(prev => ({ ...prev, [f.id]: Math.max(0, (prev[f.id] || 0) - 1) }))}
-                    disabled={pendingQty === 0}
-                    className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${pendingQty > 0 ? 'border-red-200 text-red-600 hover:bg-red-50 active:scale-90' : 'border-gray-100 text-gray-300 cursor-not-allowed'}`}
-                  >
-                    <Minus size={16} strokeWidth={3} />
-                  </button>
-                  <span className={`text-lg font-black w-6 ${pendingQty > 0 ? 'text-emerald-600' : 'text-gray-300'}`}>
-                    {pendingQty}
-                  </span>
-                  <button
-                    onClick={() => setDeliveryQuantities(prev => ({ ...prev, [f.id]: (prev[f.id] || 0) + 1 }))}
-                    className="w-8 h-8 rounded-full flex items-center justify-center border border-emerald-200 text-emerald-600 hover:bg-emerald-50 active:scale-90 transition-all"
-                  >
-                    <Plus size={16} strokeWidth={3} />
-                  </button>
-                </div>
-              </SwatchCard>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="p-4 bg-white border-t border-gray-100 flex gap-3">
-        <button
-          onClick={onClose}
-          className="flex-1 px-6 py-3 border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition-all active:scale-95"
-        >
-          Annuleer
+      <ModalFooter>
+        <button onClick={onClose} className={SECONDARY_BUTTON}>Annuleer</button>
+        <button onClick={handleConfirm} disabled={totalSpools === 0 || isSaving} className={PRIMARY_BUTTON}>
+          {totalSpools === 0 ? 'Bewaar' : `Voeg ${totalSpools} ${totalSpools === 1 ? 'rol' : 'rollen'} toe`}
         </button>
-        <button
-          onClick={handleConfirm}
-          disabled={Object.values(deliveryQuantities).every(v => v === 0)}
-          className="flex-[2] px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-100 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed"
-        >
-          Bewaar
-        </button>
-      </div>
+      </ModalFooter>
     </>
   );
 }

@@ -46,7 +46,9 @@ These came from direct feedback; follow them unless asked otherwise.
 
 - **Calm and compact.** Icon-only buttons where the icon is clear (share, sort, print in the header), with a `title` and `aria-label`. No big labelled call-to-action buttons; a fixed "Print registreren" bar was rejected as too prominent.
 - **Phone first.** On phones the header holds only the title and a ☰ menu with all actions (print, delivery, settings, logout); sorting folds out from a ⇅ button; filters get their own row without horizontal scrolling. Larger screens show the actions inline.
+- **One red.** Warnings and destructive actions use the theme colors `danger`, `danger-strong`, `danger-light` and `danger-soft` (`src/index.css`), a deep calm red; never Tailwind's `red-*`, which the owner found too bright.
 - **No redundant indicators.** E.g. the active sort shows only its direction arrow, no extra check mark.
+- **The filament's color is the star.** Cards have no stock bar or other colored blocks; the swatch is the only color. Low stock is explicit and in grams (`getStockStatus`): "Bijna op" at 250 g or less, "Beperkt" at 500 g or less, each with a filled label, a colored amount and border (red / amber); the card itself stays white. When a design question has several reasonable answers, show the owner the variants side by side (screenshots of the running app) and let them pick.
 - **Share image = types and colors only.** No quantities, grams or low-stock marks; a color owned twice shows once. The "Deel" button shares directly (no preview dialog); where sharing files isn't supported it is "Bewaar" (download).
 - **Visible feedback.** Failures show a toast at the top ("… is mislukt." + reason); dialogs stay open with the input intact so a retry is one tap.
 - **Not wanted** (declined): offline mode, print history, sharing the inventory with other people. See `references/decisions.md`.
@@ -60,5 +62,5 @@ These came from direct feedback; follow them unless asked otherwise.
 - **iOS share sheet** only opens right after a tap, so the share image is drawn in advance (`useOverviewImage`) instead of on click.
 - **Firestore writes while offline** don't fail; they wait. Write paths call `requireConnection()` to fail fast with a clear message.
 - **Remaining grams are an int** (`remainingGrams`); rules reject floats. Round when converting from spools.
-- **Ports**: Vite uses a fixed 5180 (`strictPort`), because another local app registers a service worker on localhost:5173.
+- **Ports**: Vite uses a fixed 5180 (`strictPort`) on `127.0.0.1`, because another local app registers a service worker on localhost:5173, and because the owner's browser reaches localhost over IPv4 (Vite's default `::1` only looked fine to `curl localhost`). Check `http://127.0.0.1:5180` after restarting.
 - **Homebrew's openjdk@21 is keg-only** (not on PATH); `scripts/emulators.mjs` finds it, so don't tell the owner to change PATH.

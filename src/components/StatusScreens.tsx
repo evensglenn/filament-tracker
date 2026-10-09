@@ -4,7 +4,7 @@ export function ErrorScreen({ message }: { message: string }) {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 text-center">
-        <div className="w-16 h-16 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+        <div className="w-16 h-16 bg-danger-soft text-danger rounded-2xl flex items-center justify-center mx-auto mb-6">
           <ShieldAlert size={32} />
         </div>
         <h2 className="text-2xl font-bold mb-4">Oeps!</h2>

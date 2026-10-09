@@ -1,9 +1,8 @@
 import { FormEvent, useState } from 'react';
-import { Check, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { Filament, FilamentInput, ManagedType } from '../../types';
 import { filamentService } from '../../services/filamentService';
 import { spoolsToGrams } from '../../utils/filaments';
-import { isLightColor } from '../../utils/color';
 import { Modal, ModalFooter, ModalHeader, PRIMARY_BUTTON, SECONDARY_BUTTON } from '../ui/Modal';
 import { useShowError } from '../ui/Toast';
 import { ColorSwatch } from '../ui/ColorSwatch';
@@ -126,7 +125,7 @@ function FilamentForm({ filament, types, onClose, onRequestDelete }: Omit<Filame
         {presets.length > 0 && (
           <fieldset>
             <legend className={LABEL_CLASS}>Kleuren van {selectedType?.name}</legend>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2.5 p-1 -m-1">
               {presets.map(preset => {
                 const isSelected = formData.colorHex.toLowerCase() === preset.hex.toLowerCase() && formData.colorName === preset.name;
                 return (
@@ -134,15 +133,13 @@ function FilamentForm({ filament, types, onClose, onRequestDelete }: Omit<Filame
                     key={preset.id}
                     type="button"
                     onClick={() => setFormData({ ...formData, colorName: preset.name, colorHex: preset.hex })}
-                    className={`relative rounded-full p-0.5 transition-all ${isSelected ? 'ring-2 ring-emerald-500' : 'hover:scale-110'}`}
+                    // A dark ring with white space around it reads on every color, also white and green
+                    className={`flex w-9 h-9 rounded-full transition-transform ${isSelected ? 'ring-2 ring-gray-900 ring-offset-2' : 'hover:scale-110'}`}
                     title={preset.name}
                     aria-label={preset.name}
                     aria-pressed={isSelected}
                   >
-                    <ColorSwatch hex={preset.hex} name={preset.name} className="w-9 h-9" />
-                    {isSelected && (
-                      <Check size={16} strokeWidth={3} className={`absolute inset-0 m-auto ${isLightColor(preset.hex) ? 'text-gray-900' : 'text-white'}`} />
-                    )}
+                    <ColorSwatch hex={preset.hex} name={preset.name} className="w-full h-full" />
                   </button>
                 );
               })}
@@ -226,7 +223,7 @@ function FilamentForm({ filament, types, onClose, onRequestDelete }: Omit<Filame
             onClick={() => onRequestDelete(filament.id)}
             aria-label="Verwijder filament"
             title="Verwijder filament"
-            className="w-12 shrink-0 flex items-center justify-center text-red-600 border border-gray-200 rounded-xl hover:bg-red-50 hover:border-red-200 transition-colors"
+            className="w-12 shrink-0 flex items-center justify-center text-danger border border-gray-200 rounded-xl hover:bg-danger-soft hover:border-danger-light transition-colors"
           >
             <Trash2 size={18} />
           </button>

@@ -48,7 +48,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               exit={{ opacity: 0, y: -12 }}
               className="pointer-events-auto w-full max-w-md flex items-start gap-3 bg-gray-900 text-white rounded-2xl shadow-xl px-4 py-3"
             >
-              <AlertCircle size={20} className="text-red-400 shrink-0 mt-0.5" />
+              <AlertCircle size={20} className="text-danger-light shrink-0 mt-0.5" />
               <div className="min-w-0 flex-1 text-sm">
                 <p className="font-semibold">{toast.title}</p>
                 <p className="text-gray-300">{toast.detail}</p>

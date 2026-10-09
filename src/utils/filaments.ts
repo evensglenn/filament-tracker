@@ -15,13 +15,19 @@ export const formatSpools = (spools: number) => String(Number(spools.toFixed(2))
 /** "1 rol", "0.87 rol", "2.3 rollen" */
 export const formatSpoolsWithUnit = (spools: number) => `${formatSpools(spools)} ${spools > 1 ? 'rollen' : 'rol'}`;
 
-/** Below this many spools a filament counts as almost empty. */
-export const LOW_STOCK_SPOOLS = 0.25;
+/** At or below these amounts a filament is "Bijna op" or "Beperkt", whatever the spool size. */
+export const ALMOST_EMPTY_GRAMS = 250;
+export const LIMITED_GRAMS = 500;
 
-export type StockLevel = 'low' | 'medium' | 'ok';
+export type StockStatus = 'almostEmpty' | 'limited';
 
-export const getStockLevel = (spools: number): StockLevel =>
-  spools < LOW_STOCK_SPOOLS ? 'low' : spools < 0.75 ? 'medium' : 'ok';
+/** The stock state worth pointing out, or null when there is plenty left. */
+export const getStockStatus = (remainingGrams: number): StockStatus | null =>
+  remainingGrams <= ALMOST_EMPTY_GRAMS ? 'almostEmpty' : remainingGrams <= LIMITED_GRAMS ? 'limited' : null;
+
+export const isAlmostEmpty = (filament: Pick<Filament, 'remainingGrams'>) =>
+  getStockStatus(filament.remainingGrams) === 'almostEmpty';
+
 
 /** Sorts by most recently used in a print first, then by name. */
 export const byRecentUse = (a: Filament, b: Filament) =>
@@ -51,7 +57,7 @@ const matchesFilter = (filament: Filament, filterType: FilterOption) => {
     case 'All': return true;
     case 'PLA': return filament.typeName.startsWith('PLA');
     case 'PETG': return filament.typeName.startsWith('PETG');
-    case 'Low': return filament.spools < LOW_STOCK_SPOOLS;
+    case 'Low': return isAlmostEmpty(filament);
   }
 };
 

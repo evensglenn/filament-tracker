@@ -17,6 +17,7 @@ Read this before proposing features, so you don't re-suggest what was declined o
 - **Sharing the inventory with other accounts**: removed on purpose; the app is single-user.
 - **A preview dialog for the share image**: share directly from the button.
 - **A "Bewaar" button next to "Deel"**: only one of the two shows, depending on the browser.
+- **A stock bar on the cards** (green/amber, gray, or in the filament's color): it competed with the swatch. Cards show the amount as numbers only, with "Bijna op" (≤ 250 g) and "Beperkt" (≤ 500 g) labels (v3.6).
 
 ## Ideas not done yet (ask before starting)
 - Filter chips from the owner's own types instead of the hard-coded PLA/PETG.

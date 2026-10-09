@@ -103,7 +103,7 @@ export function Toolbar({ filters, lowCount }: ToolbarProps) {
             key={option.id}
             onClick={() => setFilterType(option.id)}
             className={option.id === 'Low' && filterType !== 'Low'
-              ? `${chip(false)} !text-red-700 !border-red-200`
+              ? `${chip(false)} !text-danger !border-danger-light`
               : chip(filterType === option.id)}
           >
             {option.label}

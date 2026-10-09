@@ -36,7 +36,7 @@ export function SettingsModal({ isOpen, onClose: close, config, configActions, t
             </div>
             <button
               onClick={() => { onClose(); onLogout(); }}
-              className="h-10 px-3.5 flex items-center gap-2 text-sm font-semibold text-red-600 bg-white border border-gray-200 rounded-xl hover:bg-red-50 hover:border-red-200 transition-colors shrink-0"
+              className="h-10 px-3.5 flex items-center gap-2 text-sm font-semibold text-danger bg-white border border-gray-200 rounded-xl hover:bg-danger-soft hover:border-danger-light transition-colors shrink-0"
             >
               <LogOut size={16} />
               Uitloggen

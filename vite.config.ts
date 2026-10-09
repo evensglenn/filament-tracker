@@ -28,6 +28,8 @@ export default defineConfig(({mode}) => {
       // Own fixed port: apps sharing localhost:5173 also share service workers and storage
       port: 5180,
       strictPort: true,
+      // IPv4, like the emulators: some browsers resolve localhost to 127.0.0.1, others to ::1
+      host: '127.0.0.1',
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',

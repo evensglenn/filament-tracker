@@ -91,3 +91,14 @@ describe('isLightColor', () => {
     expect(isLightColor('#1A1A1A')).toBe(false);
   });
 });
+
+describe('getStockStatus', () => {
+  it('marks 250 g or less as almost empty and 500 g or less as limited', async () => {
+    const { getStockStatus } = await import('./filaments');
+    expect(getStockStatus(0)).toBe('almostEmpty');
+    expect(getStockStatus(250)).toBe('almostEmpty');
+    expect(getStockStatus(251)).toBe('limited');
+    expect(getStockStatus(500)).toBe('limited');
+    expect(getStockStatus(501)).toBeNull();
+  });
+});

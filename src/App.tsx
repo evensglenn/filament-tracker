@@ -7,7 +7,7 @@ import { useFilaments } from './hooks/useFilaments';
 import { useFilamentFilters } from './hooks/useFilamentFilters';
 import { useUserConfig } from './hooks/useUserConfig';
 import { useHideOnScroll } from './hooks/useHideOnScroll';
-import { LOW_STOCK_SPOOLS, toInventory } from './utils/filaments';
+import { isAlmostEmpty, toInventory } from './utils/filaments';
 import { Header } from './components/Header';
 import { ErrorScreen, LoadingScreen, LoginScreen } from './components/StatusScreens';
 import { Toolbar } from './components/inventory/Toolbar';
@@ -32,7 +32,7 @@ export default function App() {
     filamentDocs.forEach(f => usage.set(f.typeId, (usage.get(f.typeId) ?? 0) + 1));
     return usage;
   }, [filamentDocs]);
-  const lowCount = filaments.filter(f => f.spools < LOW_STOCK_SPOOLS).length;
+  const lowCount = filaments.filter(isAlmostEmpty).length;
   const filters = useFilamentFilters(filaments);
   const showHeader = useHideOnScroll();
 

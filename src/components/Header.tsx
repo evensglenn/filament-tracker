@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { MenuItem, Popover } from './ui/Popover';
 import { AppIcon } from './ui/AppIcon';
+import { StudioEvensLogo } from './ui/StudioEvensLogo';
 import { LogIn, LogOut, Menu, PackagePlus, Printer, Settings, X } from 'lucide-react';
 
 interface HeaderProps {
@@ -30,7 +31,13 @@ export function Header({ visible, isLoggedIn, onLogin, onLogout, onNewPrint, onN
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2.5 min-w-0">
           <AppIcon className="w-9 h-9" />
-          <h1 className="text-lg font-bold tracking-tight truncate">Filament tracker</h1>
+          <div className="min-w-0">
+            <h1 className="text-lg font-bold tracking-tight leading-tight truncate">Filament tracker</h1>
+            {/* The maker, as a small subtitle */}
+            <p className="flex items-center gap-1 text-[11px] leading-none text-gray-500 dark:text-gray-400">
+              by <StudioEvensLogo tone="brand" className="h-2.5 w-auto" />
+            </p>
+          </div>
         </div>
 
         {isLoggedIn ? (

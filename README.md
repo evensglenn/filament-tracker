@@ -22,7 +22,10 @@ Vereist **Java 21+** voor de emulators (`brew install openjdk@21`; het script vi
 ```bash
 npm test               # unit tests
 npm run test:emulator  # ook de Firestore-tests (account, transacties, regels) tegen de emulators
+npm run test:e2e       # browsertests (Playwright, met je geïnstalleerde Chrome) op telefoon- en desktopbreedte
 ```
+
+De browsertests in `e2e/` maken per test een eigen account met testvoorraad aan en gebruiken een draaiende `npm run dev:local` als die er is. Elke pull request draait alle tests in GitHub Actions ([ci.yml](.github/workflows/ci.yml)).
 
 ## Datamodel
 

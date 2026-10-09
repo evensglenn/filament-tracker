@@ -16,11 +16,11 @@ The owner tests everything in the browser before it goes live, and expects it to
 1. **Branch** from an up-to-date `main` (`git checkout main && git pull`, then `feat/…`, `fix/…` or `chore/…`). Never commit to `main` directly; it is protected against force-push and deletion.
 2. **Make the change**, matching the surrounding code (Tailwind classes inline, small components, comments that explain *why*).
 3. **Bump the version** in `package.json` and in `package-lock.json` (`name`/`version` at the top and in `packages[""]`): patch for fixes, minor for new or visible changes, major for breaking ones like a data migration. One bump per merged PR; if the branch already has an unmerged bump, keep it. The footer shows this version, so never hard-code it.
-4. **Check**: `npx tsc --noEmit`, `npm test`, `npm run build`. For anything touching Firestore code or `firestore.rules`, also `npm run test:emulator`.
+4. **Check**: `npx tsc --noEmit`, `npm test`, `npm run build` and `npm run test:e2e` (Playwright in `e2e/`; it reuses a running `dev:local`). For anything touching Firestore code or `firestore.rules`, also `npm run test:emulator`. When you add or change behavior, add or update a browser test for it in `e2e/` (see `e2e/fixtures.ts`).
 5. **Look at it**: drive the running app with a browser (see `references/ui-verification.md`) at phone width (360 and 390 px) *and* desktop (1280 px), and look at the screenshots yourself. Many real bugs in this project were only visible this way (a toast covering the confirm button, a menu tap also opening the card below, a header overflowing at 360 px).
 6. **Restart the local server** so the owner can try it right away on http://localhost:5180 (see below). The owner asked for this after every change.
 7. **Report** what changed, what you verified and what you could not verify (e.g. the share sheet on a real iPhone), then ask whether to commit and merge. Don't commit or merge unasked; the owner answers with things like "commit en merge" or "ja".
-8. **Commit, PR, merge, watch the deploy** when asked: commit message `type: Summary (vX.Y.Z)` with a short body, PR with Summary and Testing checklist, `gh pr merge --merge`, then `gh run watch` on the deploy run and report the result.
+8. **Commit, PR, merge, watch the deploy** when asked: commit message `type: Summary (vX.Y.Z)` with a short body, PR with Summary and Testing checklist. Wait for the CI check on the PR (`gh pr checks --watch`; `.github/workflows/ci.yml` runs types, unit, Firestore and browser tests) and only merge when it is green, then `gh pr merge --merge`, `gh run watch` on the deploy run, and report the result.
 
 ## Running locally
 

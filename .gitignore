@@ -7,3 +7,5 @@ coverage/
 .env*
 !.env.example
 filament.db
+playwright-report/
+test-results/

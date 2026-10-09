@@ -10,7 +10,7 @@ For the full workflow, the owner's preferences and known pitfalls, use the `fila
 - `npm run dev:local` starts the Firebase emulators with test data (`scripts/seed-emulator.mjs`) and the app against them; sign in with the "Test" account in the emulator popup. `npm run dev` uses the real database.
 
 ## Checks before a PR
-- `npx tsc --noEmit`, `npm test` and `npm run build`.
+- `npx tsc --noEmit`, `npm test`, `npm run build` and `npm run test:e2e` (browser tests; reuse a running `dev:local`).
 - For changes to Firestore code or `firestore.rules`: `npm run test:emulator` (needs Java 21+; `scripts/emulators.mjs` finds Homebrew's openjdk@21).
 
 ## Deploy

@@ -36,8 +36,8 @@ export function FilamentGrid({ filaments, hasInventory, isFiltered, onEdit, onAd
             <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-300 mx-auto mb-4">
               <Search size={32} />
             </div>
-            <p className="text-gray-500 font-bold">Geen resultaten gevonden</p>
-            <p className="text-sm text-gray-400 mt-1">Probeer een andere zoekterm of filter.</p>
+            <p className="text-gray-700 font-bold">Geen resultaten gevonden</p>
+            <p className="text-sm text-gray-500 mt-1">Probeer een andere zoekterm of filter.</p>
             {isFiltered && (
               <div className="mt-6 flex flex-col items-center gap-2">
                 <button
@@ -65,12 +65,12 @@ export function FilamentGrid({ filaments, hasInventory, isFiltered, onEdit, onAd
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={onAdd}
-            className="group relative flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all min-h-[100px]"
+            className="group relative flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all min-h-[104px]"
           >
             <div className="w-10 h-10 bg-gray-50 group-hover:bg-emerald-100 rounded-full flex items-center justify-center text-gray-400 group-hover:text-emerald-600 transition-colors mb-2">
               <Plus size={20} strokeWidth={3} />
             </div>
-            <span className="text-xs font-bold text-gray-400 group-hover:text-emerald-600 transition-colors">Voeg toe</span>
+            <span className="text-sm font-semibold text-gray-500 group-hover:text-emerald-700 transition-colors">Filament toevoegen</span>
           </motion.button>
         )}
       </AnimatePresence>

@@ -1,7 +1,7 @@
-import { X } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
 import { UserConfig } from '../../types';
 import { ConfigActions } from '../../hooks/useUserConfig';
-import { Modal } from '../ui/Modal';
+import { Modal, ModalFooter, ModalHeader } from '../ui/Modal';
 import { TypeSettings } from './TypeSettings';
 
 interface SettingsModalProps {
@@ -10,46 +10,49 @@ interface SettingsModalProps {
   config: UserConfig | null;
   configActions: ConfigActions;
   typeUsage: Map<string, number>;
+  userEmail: string | null;
+  onLogout: () => void;
 }
 
-export function SettingsModal({ isOpen, onClose: close, config, configActions, typeUsage }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose: close, config, configActions, typeUsage, userEmail, onLogout }: SettingsModalProps) {
   const onClose = () => {
     configActions.flush();
     close();
   };
 
   return (
-    <Modal
-      isOpen={isOpen && config !== null}
-      onClose={onClose}
-      zIndex="z-[70]"
-      className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
-    >
-      <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
-        <div>
-          <h2 className="text-xl font-bold">Instellingen</h2>
-          <p className="text-sm text-gray-500">Beheer je account en collectie</p>
-        </div>
-        <button
-          onClick={onClose}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <X size={20} />
-        </button>
-      </div>
+    <Modal isOpen={isOpen && config !== null} onClose={onClose} zIndex="z-[70]" className="sm:max-w-2xl">
+      <ModalHeader title="Instellingen" subtitle="Types, kleuren en je account" icon={<Settings size={20} />} onClose={onClose} />
 
-      <div className="p-6 overflow-y-auto flex-1">
+      <div className="px-5 sm:px-6 py-5 overflow-y-auto flex-1 space-y-8">
         {config && <TypeSettings types={config.types} usage={typeUsage} actions={configActions} />}
+
+        <section>
+          <h3 className="font-bold text-gray-900 mb-3">Account</h3>
+          <div className="flex items-center justify-between gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-200">
+            <div className="min-w-0">
+              <p className="text-xs text-gray-500">Ingelogd als</p>
+              <p className="text-sm font-semibold text-gray-900 truncate">{userEmail}</p>
+            </div>
+            <button
+              onClick={() => { onClose(); onLogout(); }}
+              className="h-10 px-3.5 flex items-center gap-2 text-sm font-semibold text-red-600 bg-white border border-gray-200 rounded-xl hover:bg-red-50 hover:border-red-200 transition-colors shrink-0"
+            >
+              <LogOut size={16} />
+              Uitloggen
+            </button>
+          </div>
+        </section>
       </div>
 
-      <div className="p-6 bg-gray-50 border-t border-gray-100">
+      <ModalFooter>
         <button
           onClick={onClose}
-          className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-all active:scale-95"
+          className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-all active:scale-[0.98]"
         >
           Klaar
         </button>
-      </div>
+      </ModalFooter>
     </Modal>
   );
 }

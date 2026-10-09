@@ -7,8 +7,8 @@ import { useFilaments } from './hooks/useFilaments';
 import { useFilamentFilters } from './hooks/useFilamentFilters';
 import { useUserConfig } from './hooks/useUserConfig';
 import { useHideOnScroll } from './hooks/useHideOnScroll';
-import { toInventory } from './utils/filaments';
-import { Header } from './components/Header';
+import { LOW_STOCK_SPOOLS, toInventory } from './utils/filaments';
+import { Header, MobilePrintButton } from './components/Header';
 import { ErrorScreen, LoadingScreen, LoginScreen } from './components/StatusScreens';
 import { Toolbar } from './components/inventory/Toolbar';
 import { FilamentGrid } from './components/inventory/FilamentGrid';
@@ -32,6 +32,7 @@ export default function App() {
     filamentDocs.forEach(f => usage.set(f.typeId, (usage.get(f.typeId) ?? 0) + 1));
     return usage;
   }, [filamentDocs]);
+  const lowCount = filaments.filter(f => f.spools < LOW_STOCK_SPOOLS).length;
   const filters = useFilamentFilters(filaments);
   const showHeader = useHideOnScroll();
 
@@ -68,20 +69,20 @@ export default function App() {
         visible={showHeader}
         isLoggedIn={!!user}
         onLogin={login}
-        onLogout={logout}
         onNewPrint={() => setActiveModal('print')}
         onNewDelivery={() => setActiveModal('delivery')}
         onOpenSettings={() => setActiveModal('settings')}
       />
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+      {/* Extra bottom space on phones for the fixed print button */}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8 pb-28 sm:pb-8">
         {!isAuthReady || (user && !isReady) ? (
           <LoadingScreen />
         ) : !user ? (
           <LoginScreen onLogin={login} />
         ) : (
           <>
-            <Toolbar filters={filters} onOpenOverview={() => setActiveModal('overview')} />
+            <Toolbar filters={filters} lowCount={lowCount} onOpenOverview={() => setActiveModal('overview')} />
             <FilamentGrid
               filaments={filters.filtered}
               hasInventory={filaments.length > 0}
@@ -90,6 +91,7 @@ export default function App() {
               onAdd={() => openForm()}
               onResetFilters={filters.resetFilters}
             />
+            <MobilePrintButton onClick={() => setActiveModal('print')} />
           </>
         )}
       </main>
@@ -108,6 +110,8 @@ export default function App() {
         config={config}
         configActions={configActions}
         typeUsage={typeUsage}
+        userEmail={user?.email ?? null}
+        onLogout={logout}
       />
 
       <DeleteConfirmModal
@@ -120,10 +124,8 @@ export default function App() {
       <DeliveryModal isOpen={activeModal === 'delivery'} onClose={closeModal} filaments={filaments} />
       <PrintModal isOpen={activeModal === 'print'} onClose={closeModal} filaments={filaments} />
 
-      <footer className="max-w-5xl mx-auto px-4 sm:px-6 py-8 text-center">
-        <p className="text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em]">
-          Filament Tracker v2.0.0
-        </p>
+      <footer className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-32 sm:pb-8 text-center">
+        <p className="text-xs text-gray-400">Filament tracker v{__APP_VERSION__}</p>
       </footer>
     </div>
   );

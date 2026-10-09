@@ -1,7 +1,7 @@
 import { Filament, FilamentDoc, ManagedType } from '../types';
 import { getHue } from './color';
 
-export type FilterOption = 'All' | 'PLA' | 'PETG' | 'Other';
+export type FilterOption = 'All' | 'PLA' | 'PETG' | 'Low';
 export type SortField = 'name' | 'quantity' | 'color';
 export type SortOrder = 'asc' | 'desc';
 
@@ -12,12 +12,36 @@ export const spoolsToGrams = (spools: number, spoolWeight: number) => Math.max(0
 /** Spools with at most two decimals, e.g. 2, 0.5 or 0.87. */
 export const formatSpools = (spools: number) => String(Number(spools.toFixed(2)));
 
+/** "1 rol", "0.87 rol", "2.3 rollen" */
+export const formatSpoolsWithUnit = (spools: number) => `${formatSpools(spools)} ${spools > 1 ? 'rollen' : 'rol'}`;
+
+/** Below this many spools a filament counts as almost empty. */
+export const LOW_STOCK_SPOOLS = 0.25;
+
+export type StockLevel = 'low' | 'medium' | 'ok';
+
+export const getStockLevel = (spools: number): StockLevel =>
+  spools < LOW_STOCK_SPOOLS ? 'low' : spools < 0.75 ? 'medium' : 'ok';
+
+/** Sorts by most recently used in a print first, then by name. */
+export const byRecentUse = (a: Filament, b: Filament) =>
+  (b.lastUsedAt?.toMillis() ?? 0) - (a.lastUsedAt?.toMillis() ?? 0) || a.colorName.localeCompare(b.colorName);
+
+/** Case-insensitive match on color name, brand and type. */
+export const matchesSearch = (filament: Filament, searchQuery: string) => {
+  const q = searchQuery.trim().toLowerCase();
+  return filament.colorName.toLowerCase().includes(q) ||
+         filament.brand.toLowerCase().includes(q) ||
+         filament.typeName.toLowerCase().includes(q);
+};
+
 /** Joins the stored filaments with their type and computes the quantity in spools. */
 export const toInventory = (docs: FilamentDoc[], types: ManagedType[]): Filament[] => {
-  const typeNames = new Map(types.map(t => [t.id, t.name]));
+  const typesById = new Map(types.map(t => [t.id, t]));
   return docs.map(doc => ({
     ...doc,
-    typeName: typeNames.get(doc.typeId) ?? 'Onbekend type',
+    typeName: typesById.get(doc.typeId)?.name ?? 'Onbekend type',
+    typeBrand: typesById.get(doc.typeId)?.brand ?? '',
     spools: toSpools(doc.remainingGrams, doc.spoolWeight),
   }));
 };
@@ -27,15 +51,8 @@ const matchesFilter = (filament: Filament, filterType: FilterOption) => {
     case 'All': return true;
     case 'PLA': return filament.typeName.startsWith('PLA');
     case 'PETG': return filament.typeName.startsWith('PETG');
-    case 'Other': return filament.typeName === 'Other' || filament.typeName === 'TPU';
+    case 'Low': return filament.spools < LOW_STOCK_SPOOLS;
   }
-};
-
-const matchesSearch = (filament: Filament, searchQuery: string) => {
-  const q = searchQuery.toLowerCase();
-  return filament.colorName.toLowerCase().includes(q) ||
-         filament.brand.toLowerCase().includes(q) ||
-         filament.typeName.toLowerCase().includes(q);
 };
 
 export const filterAndSortFilaments = (
@@ -58,8 +75,3 @@ export const filterAndSortFilaments = (
     return sortOrder === 'asc' ? comparison : -comparison;
   });
 
-export const getQuantityColor = (qty: number) => {
-  if (qty < 0.25) return 'text-red-600 bg-red-50';
-  if (qty < 0.75) return 'text-amber-600 bg-amber-50';
-  return 'text-emerald-600 bg-emerald-50';
-};

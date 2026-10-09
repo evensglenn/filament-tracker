@@ -106,7 +106,7 @@ function TypeEditor({ type, usedBy, actions }: { type: ManagedType; usedBy: numb
                 <button
                   onClick={() => actions.removePreset(type.id, preset.id)}
                   aria-label={`Verwijder ${preset.name}`}
-                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-danger hover:bg-danger-soft rounded-lg transition-colors shrink-0"
                 >
                   <X size={16} />
                 </button>
@@ -124,7 +124,7 @@ function TypeEditor({ type, usedBy, actions }: { type: ManagedType; usedBy: numb
             onClick={() => actions.deleteType(type.id)}
             disabled={usedBy > 0}
             title={usedBy > 0 ? `In gebruik door ${usedBy} filament${usedBy === 1 ? '' : 'en'}` : undefined}
-            className={`${SMALL_BUTTON} text-red-600 hover:bg-red-50 disabled:text-gray-400 disabled:hover:bg-transparent disabled:cursor-not-allowed`}
+            className={`${SMALL_BUTTON} text-danger hover:bg-danger-soft disabled:text-gray-400 disabled:hover:bg-transparent disabled:cursor-not-allowed`}
           >
             <Trash2 size={16} />
             {usedBy > 0 ? 'In gebruik' : 'Type verwijderen'}

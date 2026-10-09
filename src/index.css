@@ -4,6 +4,13 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* One calm, deep red for everything that warns or deletes. Tailwind's red-600 looked too
+     bright next to the filament colors. */
+  --color-danger: #b91c1c;        /* icons, text, filled labels and buttons */
+  --color-danger-strong: #991b1b; /* hover on filled buttons, emphasized amounts */
+  --color-danger-light: #fca5a5;  /* borders, and icons on a dark background */
+  --color-danger-soft: #fef2f2;   /* light backgrounds and hover */
 }
 
 @layer base {

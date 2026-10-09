@@ -59,7 +59,7 @@ function PrintContent({ onClose, filaments }: Omit<PrintModalProps, 'isOpen'>) {
           if (usage <= 0) return `${f.remainingGrams} g over`;
           const left = f.remainingGrams - usage;
           return left < 0
-            ? <span className="text-red-600 font-semibold">{usage - f.remainingGrams} g te weinig</span>
+            ? <span className="text-danger font-semibold">{usage - f.remainingGrams} g te weinig</span>
             : <span className="text-emerald-700 font-semibold">{f.remainingGrams} → {left} g</span>;
         }}
         renderControl={f => (

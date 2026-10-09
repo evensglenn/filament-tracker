@@ -47,7 +47,7 @@ export function Header({ visible, isLoggedIn, onLogin, onLogout, onNewPrint, onN
               <button onClick={onOpenSettings} className={ICON_BUTTON} title="Instellingen" aria-label="Instellingen">
                 <Settings size={20} />
               </button>
-              <button onClick={onLogout} className={`${ICON_BUTTON} hover:!text-red-600 hover:!bg-red-50`} title="Uitloggen" aria-label="Uitloggen">
+              <button onClick={onLogout} className={`${ICON_BUTTON} hover:!text-danger hover:!bg-danger-soft`} title="Uitloggen" aria-label="Uitloggen">
                 <LogOut size={20} />
               </button>
             </div>

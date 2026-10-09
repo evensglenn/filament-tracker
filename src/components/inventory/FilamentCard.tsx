@@ -1,13 +1,12 @@
 import { Ref } from 'react';
 import { motion } from 'motion/react';
 import { Filament } from '../../types';
-import { formatSpools, getStockLevel, StockLevel } from '../../utils/filaments';
+import { formatSpools, getStockStatus, StockStatus } from '../../utils/filaments';
 import { ColorSwatch } from '../ui/ColorSwatch';
 
-const BAR_COLOR: Record<StockLevel, string> = {
-  low: 'bg-red-500',
-  medium: 'bg-amber-400',
-  ok: 'bg-emerald-500',
+const STATUS_STYLE: Record<StockStatus, { label: string; border: string; badge: string; amount: string }> = {
+  almostEmpty: { label: 'Bijna op', border: 'border-danger-light', badge: 'text-white bg-danger', amount: 'text-danger-strong' },
+  limited: { label: 'Beperkt', border: 'border-amber-400', badge: 'text-white bg-amber-600', amount: 'text-amber-700' },
 };
 
 interface FilamentCardProps {
@@ -18,9 +17,9 @@ interface FilamentCardProps {
 }
 
 export function FilamentCard({ filament, onEdit, ref }: FilamentCardProps) {
-  const level = getStockLevel(filament.spools);
-  // The bar shows how full the last spool is; with a spool or more in stock it stays full
-  const fill = Math.min(filament.spools, 1) * 100;
+  // Only low stock stands out; otherwise the color swatch is the only color on the card
+  const status = getStockStatus(filament.remainingGrams);
+  const style = status && STATUS_STYLE[status];
   const showBrand = filament.brand && filament.brand !== filament.typeBrand;
 
   return (
@@ -31,7 +30,7 @@ export function FilamentCard({ filament, onEdit, ref }: FilamentCardProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       onClick={() => onEdit(filament)}
-      className={`flex flex-col text-left bg-white rounded-2xl border p-4 hover:shadow-lg hover:shadow-gray-200/60 transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${level === 'low' ? 'border-red-200' : 'border-gray-200'}`}
+      className={`flex flex-col text-left bg-white rounded-2xl border p-4 hover:shadow-lg hover:shadow-gray-200/60 transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${style ? style.border : 'border-gray-200'}`}
     >
       <div className="flex items-start gap-3 w-full">
         <ColorSwatch hex={filament.colorHex} name={filament.colorName} className="w-11 h-11" />
@@ -46,7 +45,7 @@ export function FilamentCard({ filament, onEdit, ref }: FilamentCardProps) {
         </div>
 
         <div className="text-right shrink-0">
-          <p className="text-xl font-bold leading-none tabular-nums">
+          <p className={`text-xl font-bold leading-none tabular-nums ${style ? style.amount : ''}`}>
             {formatSpools(filament.spools)}
             <span className="text-sm font-medium text-gray-500"> {filament.spools > 1 ? 'rollen' : 'rol'}</span>
           </p>
@@ -54,14 +53,9 @@ export function FilamentCard({ filament, onEdit, ref }: FilamentCardProps) {
         </div>
       </div>
 
-      <div className="mt-3 flex items-center gap-2 w-full">
-        <div className="h-1.5 flex-1 bg-gray-100 rounded-full overflow-hidden">
-          <div className={`h-full rounded-full ${BAR_COLOR[level]}`} style={{ width: `${fill}%` }} />
-        </div>
-        {level === 'low' && (
-          <span className="text-xs font-semibold text-red-700 bg-red-50 px-2 py-0.5 rounded-full shrink-0">Bijna op</span>
-        )}
-      </div>
+      {style && (
+        <span className={`mt-2 self-start text-[13px] font-semibold px-2.5 py-0.5 rounded-full ${style.badge}`}>{style.label}</span>
+      )}
 
       {filament.notes && (
         <p className="mt-2 text-xs text-gray-500 italic truncate">{filament.notes}</p>

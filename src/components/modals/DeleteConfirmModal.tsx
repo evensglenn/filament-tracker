@@ -22,7 +22,7 @@ export function DeleteConfirmModal({ isOpen, onCancel, onConfirm }: DeleteConfir
   return (
     <Modal isOpen={isOpen} onClose={onCancel} className="sm:max-w-sm">
       <div className="p-6 sm:p-8 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center">
-        <div className="w-14 h-14 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="w-14 h-14 bg-danger-soft text-danger rounded-full flex items-center justify-center mx-auto mb-4">
           <Trash2 size={26} />
         </div>
         <h3 className="text-xl font-bold mb-2">Weet je het zeker?</h3>
@@ -37,7 +37,7 @@ export function DeleteConfirmModal({ isOpen, onCancel, onConfirm }: DeleteConfir
           <button
             onClick={confirm}
             disabled={isDeleting}
-            className="flex-1 px-5 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-all active:scale-[0.98] disabled:opacity-50"
+            className="flex-1 px-5 py-3 bg-danger text-white font-bold rounded-xl hover:bg-danger-strong transition-all active:scale-[0.98] disabled:opacity-50"
           >
             Verwijder
           </button>

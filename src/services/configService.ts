@@ -1,4 +1,4 @@
-import { onSnapshot, setDoc } from 'firebase/firestore';
+import { getDoc, onSnapshot, setDoc } from 'firebase/firestore';
 import { paths } from '../firebase';
 import { UserConfig, ManagedType } from '../types';
 import { BAMBU_COLORS } from '../constants';
@@ -15,9 +15,21 @@ export const DEFAULT_BAMBU_TYPES: ManagedType[] = Object.entries(BAMBU_COLORS).m
 });
 
 export const configService = {
+  /** Creates the user document with the default types on first login. */
+  async ensureAccount(uid: string): Promise<void> {
+    try {
+      const snap = await getDoc(paths.user(uid));
+      if (!snap.exists()) {
+        await setDoc(paths.user(uid), { types: DEFAULT_BAMBU_TYPES });
+      }
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, `users/${uid}`);
+    }
+  },
+
   async saveConfig(uid: string, config: UserConfig): Promise<void> {
     try {
-      // merge keeps the other fields of the user document (e.g. migratedAt)
+      // merge keeps the other fields of the user document
       await setDoc(paths.user(uid), { types: config.types }, { merge: true });
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `users/${uid}`);
@@ -26,7 +38,7 @@ export const configService = {
 
   subscribeToConfig(uid: string, callback: (config: UserConfig) => void) {
     return onSnapshot(paths.user(uid), (docSnap) => {
-      // The document is created by the migration before anything subscribes
+      // The document is created by ensureAccount before anything subscribes
       if (docSnap.exists()) {
         callback({ types: docSnap.data().types ?? [] });
       }

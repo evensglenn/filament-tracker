@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Filament } from './types';
 import { filamentService } from './services/filamentService';
 import { useAuth } from './hooks/useAuth';
-import { useDataMigration } from './hooks/useDataMigration';
+import { useAccountSetup } from './hooks/useAccountSetup';
 import { useFilaments } from './hooks/useFilaments';
 import { useFilamentFilters } from './hooks/useFilamentFilters';
 import { useUserConfig } from './hooks/useUserConfig';
@@ -23,7 +23,7 @@ type ActiveModal = 'form' | 'settings' | 'overview' | 'delivery' | 'print' | nul
 
 export default function App() {
   const { user, isAuthReady, login, logout } = useAuth();
-  const { isReady, error: migrationError } = useDataMigration(user);
+  const { isReady, error: accountError } = useAccountSetup(user);
   const { filaments: filamentDocs, error: filamentsError } = useFilaments(user, isReady);
   const { config, actions: configActions } = useUserConfig(user, isReady);
   const filaments = useMemo(() => toInventory(filamentDocs, config?.types ?? []), [filamentDocs, config]);
@@ -57,7 +57,7 @@ export default function App() {
     setDeleteId(null);
   };
 
-  const error = migrationError ?? filamentsError;
+  const error = accountError ?? filamentsError;
   if (error) {
     return <ErrorScreen message={error} />;
   }

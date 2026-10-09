@@ -13,7 +13,7 @@ npm run dev
 
 ```bash
 npm test               # unit tests
-npm run test:emulator  # ook de Firestore-tests (migratie, transacties, regels) tegen de Firebase-emulator; vereist Java 21+
+npm run test:emulator  # ook de Firestore-tests (account, transacties, regels) tegen de Firebase-emulator; vereist Java 21+
 ```
 
 Tegen de emulator ontwikkelen in plaats van tegen de echte database: start `npx firebase-tools@14 emulators:start --only auth,firestore` en daarna `VITE_USE_EMULATORS=true npm run dev`.
@@ -28,7 +28,7 @@ Alles van een gebruiker staat onder `users/{uid}`:
 | `users/{uid}/filaments/{id}` | Een filament; `remainingGrams` is de voorraad in grammen, `typeId` verwijst naar een type |
 | `users/{uid}/prints/{id}` | Printlog (alleen toevoegen) |
 
-De regels staan in [firestore.rules](firestore.rules), het schema in [firebase-blueprint.json](firebase-blueprint.json). Data uit het oude model (`filaments`, `userConfigs`) wordt bij de eerste login eenmalig gemigreerd door [migrationService.ts](src/services/migrationService.ts); die oude collecties zijn alleen nog leesbaar.
+De regels staan in [firestore.rules](firestore.rules), het schema in [firebase-blueprint.json](firebase-blueprint.json).
 
 ## Deploy
 

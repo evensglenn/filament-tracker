@@ -9,7 +9,7 @@ service cloud.firestore {
     //
     // Document: users/{uid}
     //   - types: list (required) - Filament types with their color presets
-    //   - migratedAt: timestamp (optional) - Set once the v1 data was copied over
+    //   - migratedAt: timestamp (optional, legacy) - Set by the one-time v1 migration; no longer written
     //
     // Collection: users/{uid}/filaments
     //   - typeId: string (required) - id of an entry in users/{uid}.types
@@ -93,19 +93,6 @@ service cloud.firestore {
         allow read, delete: if isOwner(uid);
         allow create: if isOwner(uid) && isValidPrint(request.resource.data);
       }
-    }
-
-    // ===============================================================
-    // Legacy (v1) collections: read-only, so the one-time migration can
-    // copy them and devices still running the old version can't change
-    // data that was already migrated. Remove once all data is migrated.
-    // ===============================================================
-    match /filaments/{filamentId} {
-      allow read: if request.auth != null && resource.data.uid == request.auth.uid;
-    }
-
-    match /userConfigs/{uid} {
-      allow read: if isOwner(uid);
     }
   }
 }

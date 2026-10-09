@@ -14,12 +14,11 @@ import { Toolbar } from './components/inventory/Toolbar';
 import { FilamentGrid } from './components/inventory/FilamentGrid';
 import { FilamentFormModal } from './components/modals/FilamentFormModal';
 import { DeleteConfirmModal } from './components/modals/DeleteConfirmModal';
-import { OverviewModal } from './components/modals/OverviewModal';
 import { DeliveryModal } from './components/modals/DeliveryModal';
 import { PrintModal } from './components/modals/PrintModal';
 import { SettingsModal } from './components/settings/SettingsModal';
 
-type ActiveModal = 'form' | 'settings' | 'overview' | 'delivery' | 'print' | null;
+type ActiveModal = 'form' | 'settings' | 'delivery' | 'print' | null;
 
 export default function App() {
   const { user, isAuthReady, login, logout } = useAuth();
@@ -82,7 +81,7 @@ export default function App() {
           <LoginScreen onLogin={login} />
         ) : (
           <>
-            <Toolbar filters={filters} lowCount={lowCount} onOpenOverview={() => setActiveModal('overview')} />
+            <Toolbar filters={filters} lowCount={lowCount} />
             <FilamentGrid
               filaments={filters.filtered}
               hasInventory={filaments.length > 0}
@@ -119,7 +118,6 @@ export default function App() {
         onConfirm={confirmDelete}
       />
 
-      <OverviewModal isOpen={activeModal === 'overview'} onClose={closeModal} filaments={filters.filtered} />
       <DeliveryModal isOpen={activeModal === 'delivery'} onClose={closeModal} filaments={filaments} />
       <PrintModal isOpen={activeModal === 'print'} onClose={closeModal} filaments={filaments} />
 

@@ -1,10 +1,10 @@
-// Draws the inventory overview as one image with a fixed width, like the scoreboard summary.
+// Draws which filament types and colors you have as one image to share with others, like the
+// scoreboard summary. Quantities are left out on purpose: the image is about what is available.
 // The height grows with the content (more types and colors -> a longer image), so nothing has
 // to shrink to fit. Everything is drawn on a fixed design grid of DESIGN_W wide that ctx.scale()
 // enlarges to the real canvas size (W), so the image stays sharp on large screens.
 import { Filament } from '../types';
 import { getHue, isLightColor } from './color';
-import { formatSpools, formatSpoolsWithUnit, LOW_STOCK_SPOOLS } from './filaments';
 
 const DESIGN_W = 1080;
 const SCALE = 2;
@@ -18,14 +18,12 @@ const LINE = '#e5e7eb';
 const PAPER = '#f9fafb';
 const TILE = '#ffffff';
 const ACCENT = '#059669';
-const RED = '#dc2626';
-const RED_LINE = '#fecaca';
 
 const PAD = 56;
 const COLS = 3;
 const GAP = 16;
 const TILE_W = (DESIGN_W - 2 * PAD - (COLS - 1) * GAP) / COLS;
-const TILE_H = 96;
+const TILE_H = 76;
 const SWATCH_R = 26;
 const HEADER_H = 210;
 const SECTION_HEAD_H = 60;
@@ -42,11 +40,17 @@ interface Section {
   top: number;
 }
 
-/** Groups by type (alphabetically) with the colors of each type ordered like a rainbow. */
+/**
+ * Groups by type (alphabetically) with the colors of each type ordered like a rainbow.
+ * A color you have more than once (separate spools of the same type and color) shows once.
+ */
 function groupByType(filaments: Filament[]) {
   const groups = new Map<string, Filament[]>();
   for (const f of filaments) {
-    groups.set(f.typeName, [...(groups.get(f.typeName) ?? []), f]);
+    const items = groups.get(f.typeName) ?? [];
+    if (!items.some(other => other.colorName === f.colorName && other.colorHex === f.colorHex)) {
+      groups.set(f.typeName, [...items, f]);
+    }
   }
   return [...groups.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
@@ -64,7 +68,8 @@ function computeLayout(filaments: Filament[]) {
     return { ...group, top };
   });
   const emptyH = filaments.length === 0 ? 120 : 0;
-  return { sections, height: y - (sections.length ? SECTION_GAP : 0) + emptyH + FOOTER_H };
+  const colorCount = sections.reduce((sum, section) => sum + section.items.length, 0);
+  return { sections, colorCount, height: y - (sections.length ? SECTION_GAP : 0) + emptyH + FOOTER_H };
 }
 
 /** Height in pixels of the canvas for these filaments. */
@@ -112,12 +117,10 @@ function swatch(ctx: CanvasRenderingContext2D, f: Filament, cx: number, cy: numb
 }
 
 function tile(ctx: CanvasRenderingContext2D, f: Filament, x: number, y: number) {
-  const low = f.spools < LOW_STOCK_SPOOLS;
-
   roundRect(ctx, x, y, TILE_W, TILE_H, 18);
   ctx.fillStyle = TILE;
   ctx.fill();
-  ctx.strokeStyle = low ? RED_LINE : LINE;
+  ctx.strokeStyle = LINE;
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
@@ -127,15 +130,12 @@ function tile(ctx: CanvasRenderingContext2D, f: Filament, x: number, y: number) 
   const textW = TILE_W - (textX - x) - 18;
 
   ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
+  ctx.textBaseline = 'middle';
   ctx.font = font(600, 25);
   ctx.fillStyle = INK;
   // Without the product code, like on the cards, so the color name fits
-  ctx.fillText(fit(ctx, f.colorName.split(' (')[0], textW), textX, y + 42);
-
-  ctx.font = font(500, 21);
-  ctx.fillStyle = low ? RED : MUTED;
-  ctx.fillText(fit(ctx, low ? `${formatSpoolsWithUnit(f.spools)} · bijna op` : `${formatSpoolsWithUnit(f.spools)} · ${f.remainingGrams} g`, textW), textX, y + 72);
+  ctx.fillText(fit(ctx, f.colorName.split(' (')[0], textW), textX, y + TILE_H / 2 + 1);
+  ctx.textBaseline = 'alphabetic';
 }
 
 interface DrawOptions {
@@ -144,7 +144,7 @@ interface DrawOptions {
 }
 
 export function drawOverview(ctx: CanvasRenderingContext2D, filaments: Filament[], { date, version }: DrawOptions) {
-  const { sections, height } = computeLayout(filaments);
+  const { sections, colorCount, height } = computeLayout(filaments);
   ctx.scale(SCALE, SCALE);
 
   ctx.fillStyle = PAPER;
@@ -169,21 +169,12 @@ export function drawOverview(ctx: CanvasRenderingContext2D, filaments: Filament[
   ctx.font = font(700, 44);
   ctx.fillText('Filamentvoorraad', PAD + 76, 100);
 
-  const totalSpools = filaments.reduce((sum, f) => sum + f.spools, 0);
-  const lowCount = filaments.filter(f => f.spools < LOW_STOCK_SPOOLS).length;
   const dateText = date.toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' });
-  const summary = `${dateText} · ${filaments.length} ${filaments.length === 1 ? 'kleur' : 'kleuren'} · ${formatSpools(totalSpools)} ${totalSpools > 1 ? 'rollen' : 'rol'}`;
+  const typeText = `${sections.length} ${sections.length === 1 ? 'type' : 'types'}`;
+  const colorText = `${colorCount} ${colorCount === 1 ? 'kleur' : 'kleuren'}`;
   ctx.font = font(500, 24);
   ctx.fillStyle = MUTED;
-  ctx.fillText(summary, PAD, 160);
-  if (lowCount > 0) {
-    // "· 2 bijna op" in red after the summary
-    const x = PAD + ctx.measureText(`${summary} · `).width;
-    ctx.fillText(' · ', PAD + ctx.measureText(summary).width, 160);
-    ctx.fillStyle = RED;
-    ctx.font = font(600, 24);
-    ctx.fillText(`${lowCount} bijna op`, x, 160);
-  }
+  ctx.fillText(`${dateText} · ${typeText} · ${colorText}`, PAD, 160);
 
   // Sections per type
   for (const section of sections) {

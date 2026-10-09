@@ -27,3 +27,11 @@ describe('overviewHeight', () => {
     expect(overviewHeight([])).toBeGreaterThan(0);
   });
 });
+
+describe('overviewHeight with repeated colors', () => {
+  it('shows a color of the same type only once', () => {
+    const once = overviewHeight([filament('a', 'PLA')]);
+    const fourSame = overviewHeight(['a', 'a', 'a', 'a'].map(id => filament(id, 'PLA')));
+    expect(fourSame).toBe(once);
+  });
+});

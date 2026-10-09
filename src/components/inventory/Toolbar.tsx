@@ -1,6 +1,7 @@
-import { ArrowDown, ArrowUp, Image as ImageIcon, Search } from 'lucide-react';
+import { ArrowDown, ArrowUp, Download, Search, Share } from 'lucide-react';
 import { FilamentFilters } from '../../hooks/useFilamentFilters';
-import { FilterOption, formatSpools, SortField } from '../../utils/filaments';
+import { canShareFiles, shareOrSave, useOverviewImage } from '../../hooks/useOverviewImage';
+import { FilterOption, SortField } from '../../utils/filaments';
 
 const SORT_OPTIONS: { id: SortField; label: string }[] = [
   { id: 'name', label: 'Naam' },
@@ -17,10 +18,9 @@ interface ToolbarProps {
   filters: FilamentFilters;
   /** Number of filaments that are almost empty, over the whole inventory. */
   lowCount: number;
-  onOpenOverview: () => void;
 }
 
-export function Toolbar({ filters, lowCount, onOpenOverview }: ToolbarProps) {
+export function Toolbar({ filters, lowCount }: ToolbarProps) {
   const { searchQuery, setSearchQuery, filterType, setFilterType, sortBy, sortOrder, toggleSort, filtered } = filters;
 
   const filterOptions: { id: FilterOption; label: string }[] = [
@@ -30,7 +30,9 @@ export function Toolbar({ filters, lowCount, onOpenOverview }: ToolbarProps) {
     ...(lowCount > 0 ? [{ id: 'Low' as const, label: `Bijna op · ${lowCount}` }] : []),
   ];
 
-  const totalSpools = filtered.reduce((acc, f) => acc + f.spools, 0);
+  // The list as shown (search and filters applied), ready to share as an image
+  const image = useOverviewImage(filtered);
+  const canShare = canShareFiles();
 
   return (
     <div className="flex flex-col gap-3 mb-5">
@@ -46,13 +48,13 @@ export function Toolbar({ filters, lowCount, onOpenOverview }: ToolbarProps) {
           />
         </div>
         <button
-          onClick={onOpenOverview}
-          className="h-11 px-3.5 flex items-center gap-2 bg-white border border-gray-200 rounded-xl hover:border-gray-300 transition-colors shrink-0"
-          title="Overzicht als afbeelding"
+          onClick={() => image && shareOrSave(image)}
+          disabled={!image}
+          className="h-11 px-3.5 flex items-center gap-2 bg-white border border-gray-200 rounded-xl hover:border-gray-300 transition-colors shrink-0 text-sm font-semibold disabled:opacity-50"
+          title={canShare ? 'Deel deze lijst als afbeelding' : 'Bewaar deze lijst als afbeelding'}
         >
-          <ImageIcon size={16} className="text-gray-500" />
-          <span className="text-sm font-semibold tabular-nums">{formatSpools(totalSpools)}</span>
-          <span className="text-sm text-gray-500 hidden sm:inline">rollen</span>
+          {canShare ? <Share size={16} className="text-gray-500" /> : <Download size={16} className="text-gray-500" />}
+          {canShare ? 'Deel' : 'Bewaar'}
         </button>
       </div>
 

@@ -1,7 +1,7 @@
 import { card, expect, headerAction, test } from './fixtures';
 
 test('without a connection, a print shows why it failed and keeps the input', async ({ signedIn: page, context }) => {
-  await headerAction(page, 'Print registreren');
+  await headerAction(page, 'Registreer print');
   const input = page.getByLabel('Gram gebruikt van Rood (10200)');
   await input.fill('50');
 
@@ -19,7 +19,7 @@ test('without a connection, a print shows why it failed and keeps the input', as
 });
 
 test('Escape closes a dialog and gives the focus back', async ({ signedIn: page }) => {
-  const opener = page.getByRole('button', { name: 'Filament toevoegen' });
+  const opener = page.getByRole('button', { name: 'Voeg filament toe' });
   await opener.click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.keyboard.press('Escape');

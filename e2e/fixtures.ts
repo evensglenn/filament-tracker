@@ -15,7 +15,7 @@ export interface SeedFilament {
 
 /** A small inventory with every stock state: plenty, "Beperkt" (≤ 500 g) and "Bijna op" (≤ 250 g). */
 export const INVENTORY: SeedFilament[] = [
-  { typeId: 'pla-basic', colorName: 'Rood (10200)', colorHex: '#D0112B', grams: 873 },
+  { typeId: 'pla-basic', colorName: 'Rood (10200)', colorHex: '#D0112B', grams: 873, notes: 'AMS slot 1' },
   { typeId: 'pla-basic', colorName: 'Cyaan (10600)', colorHex: '#00A0E9', grams: 150 },
   { typeId: 'pla-basic', colorName: 'Geel (10401)', colorHex: '#FDB913', grams: 1000 },
   { typeId: 'pla-basic', colorName: 'Zwart (10107)', colorHex: '#1A1A1A', grams: 3800 },
@@ -62,7 +62,7 @@ async function signIn(page: Page, email: string) {
   await page.goto('/');
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
-    page.getByRole('button', { name: 'Inloggen met Google' }).click(),
+    page.getByRole('button', { name: 'Log in met Google' }).click(),
   ]);
   await popup.waitForLoadState();
   // The emulator popup needs a moment before a click on an account registers
@@ -74,7 +74,7 @@ async function signIn(page: Page, email: string) {
 }
 
 /** Runs a header action: behind the ☰ menu on phones, a labelled icon on larger screens. */
-export async function headerAction(page: Page, name: 'Print registreren' | 'Levering registreren' | 'Instellingen' | 'Uitloggen') {
+export async function headerAction(page: Page, name: 'Registreer print' | 'Registreer levering' | 'Instellingen' | 'Log uit') {
   const menu = page.getByRole('button', { name: 'Menu', exact: true });
   if (await menu.isVisible()) {
     await menu.click();

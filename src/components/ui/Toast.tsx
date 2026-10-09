@@ -46,14 +46,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               initial={{ opacity: 0, y: -12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
-              className="pointer-events-auto w-full max-w-md flex items-start gap-3 bg-gray-900 text-white rounded-2xl shadow-xl px-4 py-3"
+              className="pointer-events-auto w-full max-w-md flex items-start gap-3 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-2xl shadow-xl px-4 py-3"
             >
               <AlertCircle size={20} className="text-danger-light shrink-0 mt-0.5" />
               <div className="min-w-0 flex-1 text-sm">
                 <p className="font-semibold">{toast.title}</p>
-                <p className="text-gray-300">{toast.detail}</p>
+                <p className="text-gray-300 dark:text-gray-600">{toast.detail}</p>
               </div>
-              <button onClick={() => dismiss(toast.id)} aria-label="Melding sluiten" className="p-1 -mr-1 text-gray-400 hover:text-white rounded-lg">
+              <button onClick={() => dismiss(toast.id)} aria-label="Sluit melding" className="p-1 -mr-1 text-gray-400 dark:text-gray-500 hover:text-white dark:hover:text-gray-900 rounded-lg">
                 <X size={18} />
               </button>
             </motion.div>

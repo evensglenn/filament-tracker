@@ -46,22 +46,3 @@ export const configService = {
     }, (error) => handleFirestoreError(error, OperationType.GET, `users/${uid}`));
   },
 };
-
-/**
- * Adds the default Bambu Lab types. A type with the same name and brand gets the default
- * presets but keeps its id, so filaments that use it stay linked.
- */
-export function mergeBambuDefaults(types: ManagedType[]): ManagedType[] {
-  const updatedTypes = [...types];
-
-  DEFAULT_BAMBU_TYPES.forEach(defaultType => {
-    const existingIndex = updatedTypes.findIndex(t => t.name === defaultType.name && t.brand === defaultType.brand);
-    if (existingIndex > -1) {
-      updatedTypes[existingIndex] = { ...defaultType, id: updatedTypes[existingIndex].id };
-    } else {
-      updatedTypes.push(defaultType);
-    }
-  });
-
-  return updatedTypes;
-}

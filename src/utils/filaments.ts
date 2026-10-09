@@ -5,15 +5,16 @@ export type FilterOption = 'All' | 'PLA' | 'PETG' | 'Low';
 export type SortField = 'name' | 'quantity' | 'color';
 export type SortOrder = 'asc' | 'desc';
 
-export const toSpools = (grams: number, spoolWeight: number) => grams / (spoolWeight || 1000);
+const KILOGRAMS = new Intl.NumberFormat('nl-BE', { maximumFractionDigits: 2 });
 
-export const spoolsToGrams = (spools: number, spoolWeight: number) => Math.max(0, Math.round(spools * spoolWeight));
+/** A weight as number and unit: grams below a kilogram, kilograms from there ("873 g", "3,8 kg"). */
+export const weightParts = (grams: number) =>
+  grams < 1000 ? { value: String(Math.round(grams)), unit: 'g' } : { value: KILOGRAMS.format(grams / 1000), unit: 'kg' };
 
-/** Spools with at most two decimals, e.g. 2, 0.5 or 0.87. */
-export const formatSpools = (spools: number) => String(Number(spools.toFixed(2)));
-
-/** "1 rol", "0.87 rol", "2.3 rollen" */
-export const formatSpoolsWithUnit = (spools: number) => `${formatSpools(spools)} ${spools > 1 ? 'rollen' : 'rol'}`;
+export const formatWeight = (grams: number) => {
+  const { value, unit } = weightParts(grams);
+  return `${value} ${unit}`;
+};
 
 /** At or below these amounts a filament is "Bijna op" or "Beperkt", whatever the spool size. */
 export const ALMOST_EMPTY_GRAMS = 250;
@@ -41,14 +42,13 @@ export const matchesSearch = (filament: Filament, searchQuery: string) => {
          filament.typeName.toLowerCase().includes(q);
 };
 
-/** Joins the stored filaments with their type and computes the quantity in spools. */
+/** Joins the stored filaments with their type. */
 export const toInventory = (docs: FilamentDoc[], types: ManagedType[]): Filament[] => {
   const typesById = new Map(types.map(t => [t.id, t]));
   return docs.map(doc => ({
     ...doc,
     typeName: typesById.get(doc.typeId)?.name ?? 'Onbekend type',
     typeBrand: typesById.get(doc.typeId)?.brand ?? '',
-    spools: toSpools(doc.remainingGrams, doc.spoolWeight),
   }));
 };
 
@@ -76,7 +76,7 @@ export const filterAndSortFilaments = (
     } else if (sortBy === 'color') {
       comparison = getHue(a.colorHex) - getHue(b.colorHex);
     } else {
-      comparison = a.spools - b.spools;
+      comparison = a.remainingGrams - b.remainingGrams;
     }
     return sortOrder === 'asc' ? comparison : -comparison;
   });

@@ -12,7 +12,7 @@ const SORT_OPTIONS: { id: SortField; label: string }[] = [
 
 const chip = (active: boolean) =>
   `h-9 px-3.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 shrink-0 ${
-    active ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+    active ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
   }`;
 
 interface ToolbarProps {
@@ -39,13 +39,13 @@ export function Toolbar({ filters, lowCount }: ToolbarProps) {
     <div className="flex flex-col gap-3 mb-5">
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" size={16} />
           <input
             type="search"
             placeholder="Zoek kleur, type of merk..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-11 pl-10 pr-4 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-sm"
+            className="w-full h-11 pl-10 pr-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-petrol-500/20 focus:border-petrol-500 transition-all text-sm"
           />
         </div>
 
@@ -58,8 +58,8 @@ export function Toolbar({ filters, lowCount }: ToolbarProps) {
               onClick={toggle}
               aria-expanded={isOpen}
               aria-haspopup="menu"
-              aria-label={`Sorteren, nu op ${SORT_OPTIONS.find(o => o.id === sortBy)?.label.toLowerCase()}`}
-              className={`h-11 w-11 flex items-center justify-center border rounded-xl transition-colors ${isOpen ? 'bg-gray-900 border-gray-900 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'}`}
+              aria-label={`Sorteer (nu op ${SORT_OPTIONS.find(o => o.id === sortBy)?.label.toLowerCase()})`}
+              className={`h-11 w-11 flex items-center justify-center border rounded-xl transition-colors ${isOpen ? 'bg-gray-900 dark:bg-gray-100 border-gray-900 dark:border-gray-100 text-white dark:text-gray-900' : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'}`}
             >
               <ArrowUpDown size={18} />
             </button>
@@ -67,13 +67,13 @@ export function Toolbar({ filters, lowCount }: ToolbarProps) {
         >
           {close => (
             <>
-              <p className="px-3 pt-2 pb-1 text-xs font-medium text-gray-500">Sorteren op</p>
+              <p className="px-3 pt-2 pb-1 text-xs font-medium text-gray-500 dark:text-gray-400">Sorteren op</p>
               {SORT_OPTIONS.map(sort => (
                 <MenuItem
                   key={sort.id}
                   onClick={() => { toggleSort(sort.id); close(); }}
                   trailing={sortBy === sort.id && (
-                    <span className="text-emerald-700">
+                    <span className="text-petrol-700 dark:text-petrol-400">
                       {sortOrder === 'asc' ? <ArrowUp size={18} /> : <ArrowDown size={18} />}
                     </span>
                   )}
@@ -88,7 +88,7 @@ export function Toolbar({ filters, lowCount }: ToolbarProps) {
         <button
           onClick={() => image && shareOrSave(image)}
           disabled={!image}
-          className="h-11 w-11 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-gray-600 hover:border-gray-300 transition-colors shrink-0 disabled:opacity-50"
+          className="h-11 w-11 flex items-center justify-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-600 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600 transition-colors shrink-0 disabled:opacity-50"
           title={canShare ? 'Deel deze lijst als afbeelding' : 'Bewaar deze lijst als afbeelding'}
           aria-label={canShare ? 'Deel deze lijst als afbeelding' : 'Bewaar deze lijst als afbeelding'}
         >
@@ -111,7 +111,7 @@ export function Toolbar({ filters, lowCount }: ToolbarProps) {
         ))}
 
         {/* Larger screens: sorting stays inline */}
-        <span className="hidden sm:block w-px h-6 bg-gray-200 mx-1 shrink-0" aria-hidden />
+        <span className="hidden sm:block w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1 shrink-0" aria-hidden />
 
         {SORT_OPTIONS.map(sort => (
           <button key={sort.id} onClick={() => toggleSort(sort.id)} className={`${chip(sortBy === sort.id)} !hidden sm:!flex`}>

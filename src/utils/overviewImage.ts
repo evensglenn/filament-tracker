@@ -11,13 +11,14 @@ const SCALE = 2;
 
 export const W = DESIGN_W * SCALE;
 
-const INK = '#111827';
-const MUTED = '#6b7280';
-const FAINT = '#9ca3af';
-const LINE = '#e5e7eb';
-const PAPER = '#f9fafb';
+// Studio Evens house style
+const INK = '#2A2C2E';        // antraciet
+const MUTED = '#77746e';
+const FAINT = '#9d9a93';
+const LINE = '#dcd9d2';
+const PAPER = '#EEECE7';      // kalk
 const TILE = '#ffffff';
-const ACCENT = '#059669';
+const ACCENT = '#1E8A8A';     // petrol
 
 const PAD = 56;
 const COLS = 3;
@@ -30,7 +31,7 @@ const SECTION_HEAD_H = 60;
 const SECTION_GAP = 36;
 const FOOTER_H = 80;
 
-const font = (weight: number, size: number) => `${weight} ${size}px Inter, ui-sans-serif, system-ui, sans-serif`;
+const font = (weight: number, size: number) => `${weight} ${size}px Sora, ui-sans-serif, system-ui, sans-serif`;
 
 const TRANSPARENT_NAME = /transparant|helder|clear|translucent/i;
 
@@ -150,40 +151,40 @@ export function drawOverview(ctx: CanvasRenderingContext2D, filaments: Filament[
   ctx.fillStyle = PAPER;
   ctx.fillRect(0, 0, DESIGN_W, height);
 
-  // Header
-  ctx.fillStyle = ACCENT;
-  roundRect(ctx, PAD, 56, 56, 56, 16);
+  // Header: the app icon (antraciet tile, kalk spool, petrol hub), as in public/favicon.svg
+  ctx.fillStyle = INK;
+  roundRect(ctx, PAD, 56, 56, 56, 12);
   ctx.fill();
-  ctx.strokeStyle = '#ffffff';
+  ctx.strokeStyle = PAPER;
   ctx.lineWidth = 4;
   ctx.beginPath();
-  ctx.arc(PAD + 28, 84, 15, 0, Math.PI * 2);
+  ctx.arc(PAD + 28, 84, 16.5, 0, Math.PI * 2);
   ctx.stroke();
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = ACCENT;
   ctx.beginPath();
-  ctx.arc(PAD + 28, 84, 4, 0, Math.PI * 2);
+  ctx.arc(PAD + 28, 84, 5.7, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.textAlign = 'left';
   ctx.fillStyle = INK;
-  ctx.font = font(700, 44);
+  ctx.font = font(600, 44);
   ctx.fillText('Filamentvoorraad', PAD + 76, 100);
 
   const dateText = date.toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' });
   const typeText = `${sections.length} ${sections.length === 1 ? 'type' : 'types'}`;
   const colorText = `${colorCount} ${colorCount === 1 ? 'kleur' : 'kleuren'}`;
-  ctx.font = font(500, 24);
+  ctx.font = font(400, 24);
   ctx.fillStyle = MUTED;
   ctx.fillText(`${dateText} · ${typeText} · ${colorText}`, PAD, 160);
 
   // Sections per type
   for (const section of sections) {
     ctx.textAlign = 'left';
-    ctx.font = font(700, 26);
+    ctx.font = font(600, 26);
     ctx.fillStyle = INK;
     ctx.fillText(section.title, PAD, section.top + 36);
     const titleW = ctx.measureText(section.title).width;
-    ctx.font = font(500, 22);
+    ctx.font = font(400, 22);
     ctx.fillStyle = FAINT;
     ctx.fillText(String(section.items.length), PAD + titleW + 12, section.top + 36);
 
@@ -196,14 +197,14 @@ export function drawOverview(ctx: CanvasRenderingContext2D, filaments: Filament[
 
   if (filaments.length === 0) {
     ctx.textAlign = 'center';
-    ctx.font = font(500, 26);
+    ctx.font = font(400, 26);
     ctx.fillStyle = MUTED;
     ctx.fillText('Geen filament om te tonen', DESIGN_W / 2, HEADER_H + 60);
   }
 
   // Footer
   ctx.textAlign = 'center';
-  ctx.font = font(500, 18);
+  ctx.font = font(400, 18);
   ctx.fillStyle = FAINT;
   ctx.fillText(`Filament tracker v${version}`, DESIGN_W / 2, height - 34);
 }

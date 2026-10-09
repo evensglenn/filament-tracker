@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Timestamp } from 'firebase/firestore';
 import { FilamentDoc, ManagedType } from '../types';
-import { filterAndSortFilaments, formatSpools, spoolsToGrams, toInventory, toSpools } from './filaments';
+import { filterAndSortFilaments, formatWeight, toInventory, weightParts } from './filaments';
 
 const types: ManagedType[] = [
   { id: 'pla', name: 'PLA Basic', brand: 'Bambu Lab', presets: [] },
@@ -22,30 +22,31 @@ const filamentDoc = (overrides: Partial<FilamentDoc>): FilamentDoc => ({
   ...overrides,
 });
 
-describe('spool conversions', () => {
-  it('converts grams to spools using the spool weight', () => {
-    expect(toSpools(1500, 1000)).toBe(1.5);
-    expect(toSpools(125, 250)).toBe(0.5);
+describe('formatWeight', () => {
+  it('shows grams below a kilogram', () => {
+    expect(formatWeight(0)).toBe('0 g');
+    expect(formatWeight(873)).toBe('873 g');
+    expect(formatWeight(999.6)).toBe('1000 g');
   });
 
-  it('rounds spools to whole grams and never goes negative', () => {
-    expect(spoolsToGrams(0.873, 1000)).toBe(873);
-    expect(spoolsToGrams(1 / 3, 1000)).toBe(333);
-    expect(spoolsToGrams(-1, 1000)).toBe(0);
+  it('shows kilograms from a kilogram, with a decimal comma and at most two decimals', () => {
+    expect(formatWeight(1000)).toBe('1 kg');
+    expect(formatWeight(3800)).toBe('3,8 kg');
+    expect(formatWeight(1250)).toBe('1,25 kg');
+    expect(formatWeight(2333)).toBe('2,33 kg');
   });
 
-  it('formats spools with at most two decimals', () => {
-    expect(formatSpools(2)).toBe('2');
-    expect(formatSpools(0.5)).toBe('0.5');
-    expect(formatSpools(0.873)).toBe('0.87');
+  it('splits number and unit for separate styling', () => {
+    expect(weightParts(3800)).toEqual({ value: '3,8', unit: 'kg' });
+    expect(weightParts(150)).toEqual({ value: '150', unit: 'g' });
   });
 });
 
 describe('toInventory', () => {
-  it('joins the type name and computes spools', () => {
+  it('joins the type name and brand', () => {
     const [item] = toInventory([filamentDoc({ typeId: 'petg', remainingGrams: 500 })], types);
     expect(item.typeName).toBe('PETG HF');
-    expect(item.spools).toBe(0.5);
+    expect(item.typeBrand).toBe('Bambu Lab');
   });
 
   it('marks filaments with an unknown type', () => {
@@ -73,7 +74,7 @@ describe('filterAndSortFilaments', () => {
     expect(ids(filterAndSortFilaments(inventory, 'wit', 'All', 'name', 'asc'))).toEqual(['c']);
   });
 
-  it('sorts by quantity in spools', () => {
+  it('sorts by weight', () => {
     expect(ids(filterAndSortFilaments(inventory, '', 'All', 'quantity', 'desc'))).toEqual(['b', 'c', 'a']);
   });
 

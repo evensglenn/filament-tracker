@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Printer } from 'lucide-react';
 import { Filament } from '../../types';
 import { filamentService } from '../../services/filamentService';
-import { byRecentUse } from '../../utils/filaments';
-import { Modal, ModalFooter, ModalHeader, PRIMARY_BUTTON, SECONDARY_BUTTON } from '../ui/Modal';
+import { byRecentUse, formatWeight } from '../../utils/filaments';
+import { ATTENTION, Modal, ModalFooter, ModalHeader, PRIMARY_BUTTON, SECONDARY_BUTTON } from '../ui/Modal';
 import { FilamentPicker } from '../ui/FilamentPicker';
 import { useShowError } from '../ui/Toast';
 
@@ -44,7 +44,7 @@ function PrintContent({ onClose, filaments }: Omit<PrintModalProps, 'isOpen'>) {
   return (
     <>
       <ModalHeader
-        title="Print registreren"
+        title="Registreer print"
         subtitle="Hoeveel gram gebruikte elke kleur?"
         icon={<Printer size={20} />}
         onClose={onClose}
@@ -56,11 +56,11 @@ function PrintContent({ onClose, filaments }: Omit<PrintModalProps, 'isOpen'>) {
         isActive={f => (printUsages[f.id] || 0) > 0}
         renderDetail={f => {
           const usage = printUsages[f.id] || 0;
-          if (usage <= 0) return `${f.remainingGrams} g over`;
+          if (usage <= 0) return `${formatWeight(f.remainingGrams)} over`;
           const left = f.remainingGrams - usage;
           return left < 0
-            ? <span className="text-danger font-semibold">{usage - f.remainingGrams} g te weinig</span>
-            : <span className="text-emerald-700 font-semibold">{f.remainingGrams} → {left} g</span>;
+            ? <span className="text-danger font-semibold">{formatWeight(usage - f.remainingGrams)} te weinig</span>
+            : <span className="text-petrol-700 dark:text-petrol-400 font-semibold">{formatWeight(f.remainingGrams)} → {formatWeight(left)}</span>;
         }}
         renderControl={f => (
           <label className="relative shrink-0">
@@ -72,16 +72,16 @@ function PrintContent({ onClose, filaments }: Omit<PrintModalProps, 'isOpen'>) {
               placeholder="0"
               value={printUsages[f.id] || ''}
               onChange={e => setPrintUsages(prev => ({ ...prev, [f.id]: Math.max(0, Number(e.target.value)) }))}
-              className="w-24 h-11 pl-3 pr-7 text-right font-bold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+              className="w-24 h-11 pl-3 pr-7 text-right font-bold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-petrol-500/20 focus:border-petrol-500"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">g</span>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 dark:text-gray-500 pointer-events-none">g</span>
           </label>
         )}
       />
 
       <ModalFooter>
         <button onClick={onClose} className={SECONDARY_BUTTON}>Annuleer</button>
-        <button onClick={handleConfirm} disabled={used.length === 0 || isSaving} className={PRIMARY_BUTTON}>
+        <button onClick={handleConfirm} disabled={used.length === 0 || isSaving} className={`${PRIMARY_BUTTON} ${used.length > 0 && !isSaving ? ATTENTION : ''}`}>
           {used.length === 0
             ? 'Bevestig verbruik'
             : `Bevestig ${totalGrams} g${used.length > 1 ? ` (${used.length} kleuren)` : ''}`}

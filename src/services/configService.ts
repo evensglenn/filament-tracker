@@ -1,58 +1,50 @@
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
-import { db, auth } from '../firebase';
+import { onSnapshot, setDoc } from 'firebase/firestore';
+import { paths } from '../firebase';
 import { UserConfig, ManagedType } from '../types';
 import { BAMBU_COLORS } from '../constants';
+import { handleFirestoreError, OperationType } from './filamentService';
 
-const CONFIG_COLLECTION = 'userConfigs';
-
-export const DEFAULT_BAMBU_TYPES: ManagedType[] = Object.entries(BAMBU_COLORS).map(([name, presets]) => ({
-  id: name.toLowerCase().replace(/\s+/g, '-'),
-  name,
-  brand: 'Bambu Lab',
-  presets
-}));
+export const DEFAULT_BAMBU_TYPES: ManagedType[] = Object.entries(BAMBU_COLORS).map(([name, presets]) => {
+  const id = name.toLowerCase().replace(/\s+/g, '-');
+  return {
+    id,
+    name,
+    brand: 'Bambu Lab',
+    presets: presets.map((preset, i) => ({ ...preset, id: `${id}-${i}` }))
+  };
+});
 
 export const configService = {
-  async getConfig(uid: string): Promise<UserConfig | null> {
-    const docRef = doc(db, CONFIG_COLLECTION, uid);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return docSnap.data() as UserConfig;
+  async saveConfig(uid: string, config: UserConfig): Promise<void> {
+    try {
+      // merge keeps the other fields of the user document (e.g. migratedAt)
+      await setDoc(paths.user(uid), { types: config.types }, { merge: true });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, `users/${uid}`);
     }
-    return null;
-  },
-
-  async saveConfig(config: UserConfig): Promise<void> {
-    const docRef = doc(db, CONFIG_COLLECTION, config.uid);
-    await setDoc(docRef, config);
   },
 
   subscribeToConfig(uid: string, callback: (config: UserConfig) => void) {
-    const docRef = doc(db, CONFIG_COLLECTION, uid);
-    return onSnapshot(docRef, (docSnap) => {
+    return onSnapshot(paths.user(uid), (docSnap) => {
+      // The document is created by the migration before anything subscribes
       if (docSnap.exists()) {
-        callback(docSnap.data() as UserConfig);
-      } else {
-        // Initialize with defaults if it doesn't exist
-        const initialConfig: UserConfig = {
-          uid,
-          types: DEFAULT_BAMBU_TYPES
-        };
-        this.saveConfig(initialConfig);
-        callback(initialConfig);
+        callback({ types: docSnap.data().types ?? [] });
       }
-    });
-  }
+    }, (error) => handleFirestoreError(error, OperationType.GET, `users/${uid}`));
+  },
 };
 
-/** Adds the default Bambu Lab types, overwriting existing ones with the same name and brand. */
+/**
+ * Adds the default Bambu Lab types. A type with the same name and brand gets the default
+ * presets but keeps its id, so filaments that use it stay linked.
+ */
 export function mergeBambuDefaults(types: ManagedType[]): ManagedType[] {
   const updatedTypes = [...types];
 
   DEFAULT_BAMBU_TYPES.forEach(defaultType => {
     const existingIndex = updatedTypes.findIndex(t => t.name === defaultType.name && t.brand === defaultType.brand);
     if (existingIndex > -1) {
-      updatedTypes[existingIndex] = { ...defaultType };
+      updatedTypes[existingIndex] = { ...defaultType, id: updatedTypes[existingIndex].id };
     } else {
       updatedTypes.push(defaultType);
     }

@@ -1,6 +1,7 @@
-export type FilamentType = string;
+import { Timestamp } from 'firebase/firestore';
 
 export interface ColorPreset {
+  id: string;
   name: string;
   hex: string;
 }
@@ -12,31 +13,47 @@ export interface ManagedType {
   presets: ColorPreset[];
 }
 
+/** users/{uid} */
 export interface UserConfig {
-  uid: string;
   types: ManagedType[];
 }
 
-export interface Filament {
+/** users/{uid}/filaments/{id} */
+export interface FilamentDoc {
   id: string;
-  uid: string;
+  typeId: string; // ManagedType.id
   brand: string;
-  type: FilamentType;
   colorName: string;
   colorHex: string;
-  quantity: number; // Number of spools (e.g., 1.5, 2)
+  remainingGrams: number; // Integer, total over all spools of this filament
   spoolWeight: number; // Weight of a full spool in grams (e.g., 1000, 250)
-  notes?: string;
-  lastUsed?: string;
-  createdAt?: string;
+  notes: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  lastUsedAt?: Timestamp; // Last print that used this filament
 }
 
-export interface FilamentFormData {
-  brand: string;
-  type: FilamentType;
+/** The editable fields of a filament. */
+export type FilamentInput = Pick<FilamentDoc, 'typeId' | 'brand' | 'colorName' | 'colorHex' | 'remainingGrams' | 'spoolWeight' | 'notes'>;
+
+/** A filament as shown in the UI: joined with its type and with the quantity in spools. */
+export interface Filament extends FilamentDoc {
+  typeName: string;
+  spools: number;
+}
+
+/** users/{uid}/prints/{id} */
+export interface PrintLog {
+  id: string;
+  createdAt: Timestamp;
+  items: PrintItem[];
+}
+
+/** One filament used in a print. Name and color are copied so the log survives deleting the filament. */
+export interface PrintItem {
+  filamentId: string;
+  typeId: string;
   colorName: string;
   colorHex: string;
-  quantity: number;
-  spoolWeight: number;
-  notes?: string;
+  grams: number;
 }

@@ -1,22 +1,83 @@
 {
   "entities": {
-    "Filament": {
-      "title": "Filament",
-      "description": "A 3D printing filament spool in the inventory",
+    "ColorPreset": {
+      "title": "Color Preset",
       "type": "object",
       "properties": {
         "id": {
-          "type": "string",
-          "description": "Document ID"
+          "type": "string"
         },
-        "uid": {
-          "type": "string",
-          "description": "Owner User ID"
+        "name": {
+          "type": "string"
+        },
+        "hex": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "hex"
+      ]
+    },
+    "ManagedType": {
+      "title": "Filament Type",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
         },
         "brand": {
           "type": "string"
         },
-        "type": {
+        "presets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/entities/ColorPreset"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "brand",
+        "presets"
+      ]
+    },
+    "User": {
+      "title": "User",
+      "description": "A user's settings: filament types and their color presets",
+      "type": "object",
+      "properties": {
+        "types": {
+          "type": "array",
+          "items": {
+            "$ref": "#/entities/ManagedType"
+          }
+        },
+        "migratedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Set once the v1 data was copied over"
+        }
+      },
+      "required": [
+        "types"
+      ]
+    },
+    "Filament": {
+      "title": "Filament",
+      "description": "A 3D printing filament in the inventory",
+      "type": "object",
+      "properties": {
+        "typeId": {
+          "type": "string",
+          "description": "id of an entry in the user's types"
+        },
+        "brand": {
           "type": "string"
         },
         "colorName": {
@@ -25,8 +86,9 @@
         "colorHex": {
           "type": "string"
         },
-        "quantity": {
-          "type": "number"
+        "remainingGrams": {
+          "type": "integer",
+          "description": "Total grams left over all spools"
         },
         "spoolWeight": {
           "type": "number",
@@ -35,78 +97,83 @@
         "notes": {
           "type": "string"
         },
-        "lastUsed": {
-          "type": "string",
-          "format": "date-time"
-        },
         "createdAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUsedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last print that used this filament"
         }
       },
       "required": [
-        "uid",
+        "typeId",
         "brand",
-        "type",
         "colorName",
         "colorHex",
-        "quantity",
-        "spoolWeight"
+        "remainingGrams",
+        "spoolWeight",
+        "notes",
+        "createdAt",
+        "updatedAt"
       ]
     },
-    "UserConfig": {
-      "title": "User Config",
-      "description": "User specific configurations for types and presets",
+    "Print": {
+      "title": "Print",
+      "description": "A logged print and the filament it used",
       "type": "object",
       "properties": {
-        "uid": {
-          "type": "string"
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
         },
-        "types": {
+        "items": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
-              "id": {
+              "filamentId": {
                 "type": "string"
               },
-              "name": {
+              "typeId": {
                 "type": "string"
               },
-              "brand": {
+              "colorName": {
                 "type": "string"
               },
-              "presets": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string"
-                    },
-                    "hex": {
-                      "type": "string"
-                    }
-                  }
-                }
+              "colorHex": {
+                "type": "string"
+              },
+              "grams": {
+                "type": "integer"
               }
             }
           }
         }
       },
       "required": [
-        "uid"
+        "createdAt",
+        "items"
       ]
     }
   },
   "firestore": {
-    "/filaments/{filamentId}": {
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "User settings"
+    },
+    "/users/{uid}/filaments/{filamentId}": {
       "schema": "Filament",
       "description": "User's filament inventory"
     },
-    "/userConfigs/{uid}": {
-      "schema": "UserConfig",
-      "description": "User specific settings and types"
+    "/users/{uid}/prints/{printId}": {
+      "schema": "Print",
+      "description": "User's print log"
     }
   }
 }

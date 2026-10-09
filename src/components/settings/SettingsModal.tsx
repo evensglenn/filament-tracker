@@ -9,9 +9,10 @@ interface SettingsModalProps {
   onClose: () => void;
   config: UserConfig | null;
   configActions: ConfigActions;
+  typeUsage: Map<string, number>;
 }
 
-export function SettingsModal({ isOpen, onClose: close, config, configActions }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose: close, config, configActions, typeUsage }: SettingsModalProps) {
   const onClose = () => {
     configActions.flush();
     close();
@@ -38,7 +39,7 @@ export function SettingsModal({ isOpen, onClose: close, config, configActions }:
       </div>
 
       <div className="p-6 overflow-y-auto flex-1">
-        {config && <TypeSettings types={config.types} actions={configActions} />}
+        {config && <TypeSettings types={config.types} usage={typeUsage} actions={configActions} />}
       </div>
 
       <div className="p-6 bg-gray-50 border-t border-gray-100">

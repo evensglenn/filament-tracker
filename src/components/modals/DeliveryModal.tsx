@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Minus, PackagePlus, Plus } from 'lucide-react';
 import { Filament } from '../../types';
+import { formatSpools } from '../../utils/filaments';
 import { filamentService } from '../../services/filamentService';
 import { Modal, ModalBanner, WIDE_MODAL_CLASS } from '../ui/Modal';
 import { SwatchCard, SWATCH_GRID_CLASS } from '../ui/SwatchCard';
@@ -43,7 +44,7 @@ function DeliveryContent({ onClose, filaments }: Omit<DeliveryModalProps, 'isOpe
             return (
               <SwatchCard key={f.id} filament={f}>
                 <p className="text-[10px] font-bold text-gray-400 mt-1">
-                  Huidig: {f.quantity}
+                  Huidig: {formatSpools(f.spools)}
                 </p>
 
                 <div className="mt-2 flex items-center justify-center gap-3">

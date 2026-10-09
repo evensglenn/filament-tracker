@@ -1,11 +1,5 @@
-import { FilamentType } from './types';
-
-export interface ColorPreset {
-  name: string;
-  hex: string;
-}
-
-export const BAMBU_COLORS: Record<string, ColorPreset[]> = {
+/** Default Bambu Lab colors per type, used to seed a new account's types and presets. */
+export const BAMBU_COLORS: Record<string, { name: string; hex: string }[]> = {
   'PLA Basic': [
     { name: 'Jadewit (10100)', hex: '#F5F5F5' },
     { name: 'Puurwit (10101)', hex: '#FFFFFF' },

@@ -2,7 +2,7 @@ import { Ref } from 'react';
 import { motion } from 'motion/react';
 import { Disc } from 'lucide-react';
 import { Filament } from '../../types';
-import { getQuantityColor } from '../../utils/filaments';
+import { formatSpools, getQuantityColor } from '../../utils/filaments';
 
 interface FilamentCardProps {
   filament: Filament;
@@ -34,7 +34,7 @@ export function FilamentCard({ filament, onEdit, ref }: FilamentCardProps) {
             </h3>
             <div className="mt-1 flex flex-wrap gap-1">
               <span className="text-[10px] font-bold px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded uppercase tracking-wider inline-block">
-                {filament.type}
+                {filament.typeName}
               </span>
             </div>
             <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest mt-0.5 truncate">
@@ -50,9 +50,11 @@ export function FilamentCard({ filament, onEdit, ref }: FilamentCardProps) {
         )}
       </div>
 
-      <div className={`w-14 flex flex-col items-center justify-center gap-1 transition-all shrink-0 ${getQuantityColor(filament.quantity)}`}>
+      <div className={`w-14 flex flex-col items-center justify-center gap-1 transition-all shrink-0 ${getQuantityColor(filament.spools)}`}
+        title={`${filament.remainingGrams} g`}
+      >
         <Disc size={18} />
-        <p className="text-xl font-black leading-none">{filament.quantity}</p>
+        <p className="text-xl font-black leading-none">{formatSpools(filament.spools)}</p>
       </div>
     </motion.div>
   );

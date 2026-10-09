@@ -96,7 +96,7 @@ export function Toolbar({ filters, onOpenOverview }: ToolbarProps) {
           </div>
           <div className="flex items-baseline gap-1">
             <span className="text-sm font-black text-gray-900">
-              {filtered.reduce((acc, f) => acc + f.quantity, 0).toFixed(1)}
+              {filtered.reduce((acc, f) => acc + f.spools, 0).toFixed(1)}
             </span>
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Rollen</span>
           </div>

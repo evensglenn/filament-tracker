@@ -1,5 +1,5 @@
-# Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+# Deploys the Firestore rules and indexes, then the app to GitHub Pages
+name: Deploy
 
 on:
   # Runs on pushes targeting the default branch
@@ -22,8 +22,29 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying
+  # The app expects the matching rules, so they go out first; if this fails the app is not deployed
+  firestore:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check credentials
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "::error::Repository secret FIREBASE_SERVICE_ACCOUNT is missing (service account JSON key, see README)."
+            exit 1
+          fi
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - name: Deploy Firestore rules and indexes
+        run: npx --yes firebase-tools@14 deploy --only firestore --non-interactive
+
   deploy:
+    needs: firestore
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -36,7 +57,9 @@ jobs:
         with:
           node-version: 20
       - name: Install dependencies
-        run: npm install --no-package-lock
+        run: npm ci
+      - name: Test
+        run: npm test
       - name: Build
         run: npm run build
       - name: Setup Pages
@@ -44,7 +67,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
           path: './dist'
       - name: Deploy to GitHub Pages
         id: deployment

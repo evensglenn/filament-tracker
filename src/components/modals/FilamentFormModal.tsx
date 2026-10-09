@@ -1,27 +1,39 @@
 import { FormEvent, useState } from 'react';
 import { Check, Trash2 } from 'lucide-react';
-import { Filament, FilamentFormData, ManagedType } from '../../types';
+import { Filament, FilamentInput, ManagedType } from '../../types';
 import { filamentService } from '../../services/filamentService';
+import { spoolsToGrams } from '../../utils/filaments';
 import { Modal } from '../ui/Modal';
 
-const DEFAULT_FORM_DATA: FilamentFormData = {
-  brand: 'Bambu Lab',
-  type: 'PLA Basic',
-  colorName: '',
-  colorHex: '#000000',
-  quantity: 1,
-  spoolWeight: 1000,
-  notes: ''
+/** The form edits the quantity in spools; it is stored in grams. */
+type FormData = Omit<FilamentInput, 'remainingGrams'> & { spools: number };
+
+const defaultFormData = (types: ManagedType[]): FormData => {
+  const type = types.find(t => t.name === 'PLA Basic') ?? types[0];
+  return {
+    typeId: type?.id ?? '',
+    brand: type?.brand ?? 'Bambu Lab',
+    colorName: '',
+    colorHex: '#000000',
+    spools: 1,
+    spoolWeight: 1000,
+    notes: ''
+  };
 };
 
-const toFormData = (filament: Filament): FilamentFormData => ({
+const toFormData = (filament: Filament): FormData => ({
+  typeId: filament.typeId,
   brand: filament.brand,
-  type: filament.type,
   colorName: filament.colorName,
   colorHex: filament.colorHex,
-  quantity: filament.quantity,
+  spools: Number(filament.spools.toFixed(3)),
   spoolWeight: filament.spoolWeight || 1000,
   notes: filament.notes || ''
+});
+
+const toInput = ({ spools, ...rest }: FormData): FilamentInput => ({
+  ...rest,
+  remainingGrams: spoolsToGrams(spools, rest.spoolWeight)
 });
 
 const INPUT_CLASS = 'w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all';
@@ -45,16 +57,16 @@ export function FilamentFormModal({ isOpen, filament, types, onClose, onRequestD
 }
 
 function FilamentForm({ filament, types, onClose, onRequestDelete }: Omit<FilamentFormModalProps, 'isOpen'>) {
-  const [formData, setFormData] = useState<FilamentFormData>(() => filament ? toFormData(filament) : DEFAULT_FORM_DATA);
+  const [formData, setFormData] = useState<FormData>(() => filament ? toFormData(filament) : defaultFormData(types));
   const isEditing = filament !== null;
-  const presets = types.find(t => t.name === formData.type)?.presets || [];
+  const presets = types.find(t => t.id === formData.typeId)?.presets || [];
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (filament) {
-      await filamentService.updateFilament(filament.id, formData);
+      await filamentService.updateFilament(filament.id, toInput(formData));
     } else {
-      await filamentService.addFilament(formData);
+      await filamentService.addFilament(toInput(formData));
     }
     onClose();
   };
@@ -78,20 +90,21 @@ function FilamentForm({ filament, types, onClose, onRequestDelete }: Omit<Filame
           <div className="space-y-1.5">
             <label className={LABEL_CLASS}>Type</label>
             <select
-              value={formData.type}
+              required
+              value={formData.typeId}
               onChange={e => {
-                const selectedType = types.find(t => t.name === e.target.value);
+                const selectedType = types.find(t => t.id === e.target.value);
                 setFormData({
                   ...formData,
-                  type: e.target.value,
+                  typeId: e.target.value,
                   brand: selectedType?.brand || formData.brand
                 });
               }}
               className={INPUT_CLASS}
             >
-              {/* Keep a type that was removed from the settings selectable, instead of silently showing another one */}
-              {!types.some(t => t.name === formData.type) && <option value={formData.type}>{formData.type}</option>}
-              {types.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
+              {/* Keep an unknown type selectable, instead of silently showing another one */}
+              {!types.some(t => t.id === formData.typeId) && <option value={formData.typeId}>{filament?.typeName ?? 'Kies een type'}</option>}
+              {types.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
           </div>
         </div>
@@ -103,7 +116,7 @@ function FilamentForm({ filament, types, onClose, onRequestDelete }: Omit<Filame
             <div className="flex flex-wrap gap-2">
               {presets.map(preset => (
                 <button
-                  key={preset.name}
+                  key={preset.id}
                   type="button"
                   onClick={() => setFormData({ ...formData, colorName: preset.name, colorHex: preset.hex })}
                   className={`group relative w-8 h-8 rounded-full border-2 transition-all ${formData.colorHex === preset.hex ? 'border-emerald-500 scale-110 shadow-md' : 'border-transparent hover:scale-110'}`}
@@ -150,19 +163,22 @@ function FilamentForm({ filament, types, onClose, onRequestDelete }: Omit<Filame
             <label className={LABEL_CLASS}>Aantal Rollen</label>
             <input
               type="number"
-              step="0.1"
+              step="any"
               min="0"
-              value={formData.quantity}
-              onChange={e => setFormData({ ...formData, quantity: Number(e.target.value) })}
+              value={formData.spools}
+              onChange={e => setFormData({ ...formData, spools: Number(e.target.value) })}
               className={`${INPUT_CLASS} font-bold`}
             />
+            <p className="text-[10px] text-gray-400 font-medium px-1">
+              = {spoolsToGrams(formData.spools, formData.spoolWeight)} g
+            </p>
           </div>
           <div className="space-y-1.5">
             <label className={LABEL_CLASS}>Gewicht per rol (g)</label>
             <input
               type="number"
               step="50"
-              min="0"
+              min="1"
               value={formData.spoolWeight}
               onChange={e => setFormData({ ...formData, spoolWeight: Number(e.target.value) })}
               className={`${INPUT_CLASS} font-bold`}

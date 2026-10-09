@@ -15,6 +15,7 @@ Read this before proposing features, so you don't re-suggest what was declined o
 
 - **v3.7** Stock labels as a tab in the card's bottom-right corner; weights in g/kg instead of spools; equal card heights (also "Voeg filament toe"); notes only in the edit form; imperative labels everywhere; filament types as a page instead of a dialog, without the account section; dark mode with a theme switch, the version and the Studio Evens logo in the footer; the Studio Evens house style (antraciet, kalk, petrol) in light and dark, with a matching app icon and favicon; a pulse on confirm buttons and "Log in met Google"; a soft red (soft labels with dark text) instead of bright red; the house font Sora (Light and SemiBold) instead of Inter.
 - **v3.7.1** "by Studio Evens" (the logo in the brand colors) as a small subtitle under the header title; the owner chose it under the title over next to it.
+- **v3.8** A notice when a newer version is online ("Nieuwe versie", "v… staat klaar", Vernieuw), because the installed phone app stays open in the background for days. No service worker; `version.json` per deploy.
 
 ## Declined by the owner
 - **Restoring the Bambu Lab colors** (a button that reset the default types and their colors): removed; the owner maintains types and colors by hand. New accounts still start with the Bambu Lab types once.

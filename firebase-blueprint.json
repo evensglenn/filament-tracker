@@ -61,7 +61,7 @@
         "migratedAt": {
           "type": "string",
           "format": "date-time",
-          "description": "Set once the v1 data was copied over"
+          "description": "Legacy: set by the one-time v1 migration, no longer written"
         }
       },
       "required": [

@@ -1,5 +1,5 @@
 /**
- * Integration tests against the Firebase emulators: the v1 → v2 migration, the quantity
+ * Integration tests against the Firebase emulators: account setup, the quantity
  * transactions and the security rules. Run with `npm run test:emulator`.
  */
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
@@ -7,9 +7,8 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } f
 import { doc, getDoc, getDocs, setDoc, Timestamp, updateDoc, serverTimestamp } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { auth, db, paths } from '../firebase';
-import { ensureMigrated } from './migrationService';
 import { filamentService } from './filamentService';
-import { configService } from './configService';
+import { configService, DEFAULT_BAMBU_TYPES } from './configService';
 import { FilamentDoc } from '../types';
 
 const useEmulators = import.meta.env.VITE_USE_EMULATORS === 'true';
@@ -17,7 +16,7 @@ const DB_URL = `http://127.0.0.1:8080/v1/projects/${firebaseConfig.projectId}/da
 const DENIED = { code: 'permission-denied' };
 const ADMIN = { Authorization: 'Bearer owner', 'Content-Type': 'application/json' }; // bypasses rules in the emulator
 
-/** Writes a document with admin rights, e.g. to seed v1 data the rules no longer allow writing. */
+/** Writes a document with admin rights, bypassing the rules (e.g. data outside users/{uid}). */
 async function adminSet(path: string, fields: Record<string, unknown>) {
   const toValue = (v: unknown): object =>
     typeof v === 'string' ? { stringValue: v }
@@ -27,11 +26,6 @@ async function adminSet(path: string, fields: Record<string, unknown>) {
   const body = { fields: Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, toValue(v)])) };
   const res = await fetch(`${DB_URL}/${path}`, { method: 'PATCH', headers: ADMIN, body: JSON.stringify(body) });
   if (!res.ok) throw new Error(`adminSet ${path}: ${res.status} ${await res.text()}`);
-}
-
-async function adminDeleteField(path: string, field: string) {
-  const res = await fetch(`${DB_URL}/${path}?updateMask.fieldPaths=${field}`, { method: 'PATCH', headers: ADMIN, body: '{"fields":{}}' });
-  if (!res.ok) throw new Error(`adminDeleteField ${path}: ${res.status}`);
 }
 
 async function signInAs(email: string) {
@@ -49,20 +43,8 @@ const filamentsOf = async (uid: string) => {
 };
 
 async function seedLegacy(uid: string) {
-  await adminSet(`userConfigs/${uid}`, {
-    uid,
-    types: [{ id: 'pla-basic', name: 'PLA Basic', brand: 'Bambu Lab', presets: [{ name: 'Zwart', hex: '#1A1A1A' }, { name: 'Wit', hex: '#FFFFFF' }] }],
-  });
-  await adminSet('filaments/f1', {
-    uid, brand: 'Bambu Lab', type: 'PLA Basic', colorName: 'Zwart', colorHex: '#1A1A1A',
-    quantity: 1.5, spoolWeight: 1000, notes: 'Op de AMS', createdAt: '2025-03-01T10:00:00.000Z', lastUsed: '2025-04-01T10:00:00.000Z',
-  });
-  await adminSet('filaments/f2', {
-    uid, brand: 'Sunlu', type: 'PETG Custom', colorName: 'Blauw', colorHex: '#0000FF', quantity: 0.873, spoolWeight: 250,
-  });
-  await adminSet('filaments/other', {
-    uid: 'someone-else', brand: 'X', type: 'PLA Basic', colorName: 'Rood', colorHex: '#FF0000', quantity: 1, spoolWeight: 1000,
-  });
+  await adminSet(`userConfigs/${uid}`, { uid, types: [] });
+  await adminSet('filaments/f1', { uid, brand: 'Bambu Lab', type: 'PLA Basic', colorName: 'Zwart', colorHex: '#1A1A1A', quantity: 1, spoolWeight: 1000 });
 }
 
 describe.skipIf(!useEmulators)('Firestore v2 (emulator)', () => {
@@ -75,63 +57,19 @@ describe.skipIf(!useEmulators)('Firestore v2 (emulator)', () => {
 
   afterAll(() => signOut(auth));
 
-  describe('migration', () => {
-    it('copies v1 data to users/{uid} with grams, type ids and preset ids', async () => {
-      await seedLegacy(uid);
-      await ensureMigrated(uid);
-
+  describe('account', () => {
+    it('creates a new account with the Bambu Lab defaults', async () => {
+      await configService.ensureAccount(uid);
       const user = (await getDoc(paths.user(uid))).data()!;
-      expect(user.migratedAt).toBeInstanceOf(Timestamp);
-      expect(user.types.map((t: { id: string }) => t.id)).toEqual(['pla-basic', 'legacy-petg-custom']);
-      expect(user.types[0].presets).toEqual([
-        { id: 'pla-basic-0', name: 'Zwart', hex: '#1A1A1A' },
-        { id: 'pla-basic-1', name: 'Wit', hex: '#FFFFFF' },
-      ]);
-      expect(user.types[1]).toMatchObject({ name: 'PETG Custom', brand: 'Sunlu', presets: [] });
-
-      const filaments = await filamentsOf(uid);
-      expect([...filaments.keys()].sort()).toEqual(['f1', 'f2']); // not the other user's filament
-      expect(filaments.get('f1')).toMatchObject({ typeId: 'pla-basic', remainingGrams: 1500, spoolWeight: 1000, notes: 'Op de AMS' });
-      expect(filaments.get('f1')!.createdAt.toDate().toISOString()).toBe('2025-03-01T10:00:00.000Z');
-      expect(filaments.get('f1')!.lastUsedAt).toBeUndefined();
-      expect(filaments.get('f2')).toMatchObject({ typeId: 'legacy-petg-custom', remainingGrams: 218, notes: '' });
-    });
-
-    it('starts a new account with the Bambu Lab defaults', async () => {
-      await ensureMigrated(uid);
-      const user = (await getDoc(paths.user(uid))).data()!;
-      expect(user.types.length).toBeGreaterThan(0);
+      expect(user.types).toEqual(DEFAULT_BAMBU_TYPES);
       expect(user.types[0].presets[0].id).toBe(`${user.types[0].id}-0`);
-      expect((await filamentsOf(uid)).size).toBe(0);
     });
 
-    it('runs only once', async () => {
-      await seedLegacy(uid);
-      await ensureMigrated(uid);
-      await filamentService.updateFilament('f1', { remainingGrams: 42 });
-      await ensureMigrated(uid);
-      expect((await filamentsOf(uid)).get('f1')!.remainingGrams).toBe(42);
-    });
-
-    it('resumes an interrupted run without overwriting migrated filaments', async () => {
-      await seedLegacy(uid);
-      await ensureMigrated(uid);
-      await filamentService.updateFilament('f1', { remainingGrams: 42 });
-      await adminDeleteField(`users/${uid}`, 'migratedAt'); // as if the final batch never happened
-
-      await ensureMigrated(uid);
-      const filaments = await filamentsOf(uid);
-      expect(filaments.get('f1')!.remainingGrams).toBe(42);
-      expect(filaments.size).toBe(2);
-      expect((await getDoc(paths.user(uid))).data()!.migratedAt).toBeInstanceOf(Timestamp);
-    });
-
-    it('gives the same result when two devices migrate at the same time', async () => {
-      await seedLegacy(uid);
-      await Promise.all([ensureMigrated(uid), ensureMigrated(uid)]);
-      const filaments = await filamentsOf(uid);
-      expect(filaments.size).toBe(2);
-      expect(filaments.get('f1')!.remainingGrams).toBe(1500);
+    it('leaves an existing account alone', async () => {
+      await configService.ensureAccount(uid);
+      await configService.saveConfig(uid, { types: [] });
+      await configService.ensureAccount(uid);
+      expect((await getDoc(paths.user(uid))).data()!.types).toEqual([]);
     });
   });
 
@@ -139,7 +77,7 @@ describe.skipIf(!useEmulators)('Firestore v2 (emulator)', () => {
     let id: string;
 
     beforeEach(async () => {
-      await ensureMigrated(uid);
+      await configService.ensureAccount(uid);
       id = await filamentService.addFilament({
         typeId: 'pla-basic', brand: 'Bambu Lab', colorName: 'Zwart', colorHex: '#1A1A1A', remainingGrams: 1000, spoolWeight: 1000, notes: '',
       });
@@ -183,11 +121,14 @@ describe.skipIf(!useEmulators)('Firestore v2 (emulator)', () => {
   });
 
   describe('settings', () => {
-    it('keeps the migration marker when saving types', async () => {
-      await ensureMigrated(uid);
-      await configService.saveConfig(uid, { types: [] });
+    it('keeps the legacy migration marker when saving types', async () => {
+      await adminSet(`users/${uid}`, { types: [] });
+      await fetch(`${DB_URL}/users/${uid}?updateMask.fieldPaths=migratedAt`, {
+        method: 'PATCH', headers: ADMIN, body: JSON.stringify({ fields: { migratedAt: { timestampValue: '2026-10-09T10:00:00Z' } } }),
+      });
+      await configService.saveConfig(uid, { types: DEFAULT_BAMBU_TYPES });
       const user = (await getDoc(paths.user(uid))).data()!;
-      expect(user.types).toEqual([]);
+      expect(user.types).toEqual(DEFAULT_BAMBU_TYPES);
       expect(user.migratedAt).toBeInstanceOf(Timestamp);
     });
   });
@@ -199,7 +140,7 @@ describe.skipIf(!useEmulators)('Firestore v2 (emulator)', () => {
     });
 
     it('keeps users out of each other\'s data', async () => {
-      await ensureMigrated(uid);
+      await configService.ensureAccount(uid);
       const id = await filamentService.addFilament({ ...validFilament(), remainingGrams: 10 } as never);
       await signInAs('stranger@example.com');
       await expect(getDoc(paths.user(uid))).rejects.toMatchObject(DENIED);
@@ -207,9 +148,10 @@ describe.skipIf(!useEmulators)('Firestore v2 (emulator)', () => {
       await expect(setDoc(paths.filament(uid, id), validFilament())).rejects.toMatchObject(DENIED);
     });
 
-    it('makes the v1 collections read-only', async () => {
+    it('closes the v1 collections', async () => {
       await seedLegacy(uid);
-      await expect(getDoc(doc(db, 'filaments', 'f1'))).resolves.toBeTruthy();
+      await expect(getDoc(doc(db, 'filaments', 'f1'))).rejects.toMatchObject(DENIED);
+      await expect(getDoc(doc(db, 'userConfigs', uid))).rejects.toMatchObject(DENIED);
       await expect(updateDoc(doc(db, 'filaments', 'f1'), { quantity: 9 })).rejects.toMatchObject(DENIED);
       await expect(setDoc(doc(db, 'userConfigs', uid), { uid, types: [] })).rejects.toMatchObject(DENIED);
     });

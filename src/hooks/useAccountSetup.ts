@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
-import { ensureMigrated } from '../services/migrationService';
+import { configService } from '../services/configService';
 
-/** Makes sure the user's data is in the current Firestore layout before anything loads it. */
-export function useDataMigration(user: FirebaseUser | null) {
+/** Makes sure the user's account document exists before anything loads data. */
+export function useAccountSetup(user: FirebaseUser | null) {
   const [readyUid, setReadyUid] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -11,11 +11,11 @@ export function useDataMigration(user: FirebaseUser | null) {
     if (!user) return;
     let cancelled = false;
 
-    ensureMigrated(user.uid)
+    configService.ensureAccount(user.uid)
       .then(() => { if (!cancelled) setReadyUid(user.uid); })
       .catch((err) => {
-        console.error('Migration failed:', err);
-        if (!cancelled) setError("Je gegevens konden niet worden bijgewerkt naar de nieuwe versie.");
+        console.error('Account setup failed:', err);
+        if (!cancelled) setError("Je account kon niet worden geladen.");
       });
 
     return () => { cancelled = true; };

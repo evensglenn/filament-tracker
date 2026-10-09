@@ -1,8 +1,10 @@
 # Checking a change in a real browser
 
-Type checks and unit tests don't catch layout and interaction bugs; most UI problems in this project were found by clicking through the running app. Use Playwright with the installed Google Chrome against `npm run dev:local` on http://localhost:5180.
+Type checks and unit tests don't catch layout and interaction bugs; most UI problems in this project were found by clicking through the running app.
 
-Keep helper scripts and screenshots in your scratchpad, not in the repo. Install Playwright there once (`npm i playwright` in the scratchpad); point it at the system Chrome instead of downloading browsers.
+**Lasting checks go in the repo**: `e2e/*.spec.ts`, run with `npm run test:e2e` (Playwright, installed Chrome, projects `phone` 390 px and `desktop` 1280 px). `e2e/fixtures.ts` gives each test its own fresh account with a seeded inventory (`signedIn` fixture), plus `headerAction()` (☰ menu on phones, icons on desktop) and `card()`.
+
+**One-off looks** (screenshots to judge a design, comparing variants) are better as a throwaway script in your scratchpad, against the running `dev:local` on http://127.0.0.1:5180. The snippet below is for that. In the scratchpad, `import { chromium } from 'playwright'` needs `npm i playwright` there once; point it at the system Chrome instead of downloading browsers.
 
 ## Signing in against the emulator
 

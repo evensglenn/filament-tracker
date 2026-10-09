@@ -14,6 +14,20 @@ export default defineConfig(({mode}) => {
       outDir: 'dist',
       assetsDir: 'assets',
       emptyOutDir: true,
+      rollupOptions: {
+        output: {
+          // Libraries in their own files: they download in parallel, and after a deploy the
+          // browser only fetches the (small) app code again, the rest stays cached
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return undefined;
+            if (id.includes('/@firebase/firestore') || id.includes('/@firebase/webchannel-wrapper')) return 'firestore';
+            if (id.includes('/firebase/') || id.includes('/@firebase/')) return 'firebase';
+            if (id.includes('/react-dom/') || id.includes('/react/') || id.includes('/scheduler/')) return 'react';
+            if (id.includes('/motion') || id.includes('/framer-motion/')) return 'motion';
+            return 'vendor';
+          },
+        },
+      },
     },
     define: {
       // Shown in the footer; bump the version in package.json with every change

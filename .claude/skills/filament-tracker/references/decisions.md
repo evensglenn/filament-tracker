@@ -11,6 +11,8 @@ Read this before proposing features, so you don't re-suggest what was declined o
 - **v3.4** Phone header: all actions behind ☰; phone sorting in a ⇅ popover; icon-only share button (#10).
 - **v3.5** Visible error messages (toasts at the top), fail fast without connection, dialogs with Escape/focus trap/scroll lock; the header menu covers the toolbar buttons; this skill.
 
+- **v3.6.1** Browser tests in the repo (`e2e/`, Playwright) and a CI workflow for pull requests; GitHub Actions on their Node 24 versions; libraries split into cached chunks and fonts loaded from index.html.
+
 ## Declined by the owner
 - **Offline mode** (Firestore offline cache, service worker): not needed.
 - **Print history / usage statistics**: not needed, even though the print log exists.
@@ -21,6 +23,5 @@ Read this before proposing features, so you don't re-suggest what was declined o
 
 ## Ideas not done yet (ask before starting)
 - Filter chips from the owner's own types instead of the hard-coded PLA/PETG.
-- Spool weight per type as a default; a low-stock threshold in grams instead of a quarter spool.
+- Spool weight per type as a default.
 - Offer to add a spool when adding a color that already exists.
-- Browser tests in the repo and CI; update GitHub Actions past the Node 20 deprecation; code-split Firebase to shrink the >500 kB bundle.

@@ -70,7 +70,8 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
  * until the connection is back, with no sign that nothing was saved yet.
  */
 export function requireConnection() {
-  if (!navigator.onLine) throw codedError('unavailable', 'No connection');
+  // Only when the browser says it is offline; outside a browser (Node, tests) onLine doesn't exist
+  if (globalThis.navigator?.onLine === false) throw codedError('unavailable', 'No connection');
 }
 
 export function currentUid(): string {

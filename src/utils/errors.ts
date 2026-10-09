@@ -12,7 +12,7 @@ export const isCancelledSignIn = (error: unknown) => CANCELLED_CODES.includes(co
 /** A short Dutch explanation of why an action failed, for a message to the user. */
 export function describeError(error: unknown): string {
   const code = codeOf(error);
-  if (CONNECTION_CODES.includes(code) || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+  if (CONNECTION_CODES.includes(code) || globalThis.navigator?.onLine === false) {
     return 'Geen verbinding met de server. Controleer je internet en probeer het opnieuw.';
   }
   if (code === 'permission-denied') {

@@ -1,22 +1,15 @@
-import { 
-  collection, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  query, 
-  where, 
-  orderBy, 
+import {
+  addDoc,
+  deleteDoc,
+  doc,
   onSnapshot,
-  getDocFromServer,
-  getDocs,
   runTransaction,
-  writeBatch
+  serverTimestamp,
+  Transaction,
+  updateDoc
 } from 'firebase/firestore';
-import { db, auth } from '../firebase';
-import { Filament, FilamentFormData } from '../types';
-
-const COLLECTION_NAME = 'filaments';
+import { db, auth, paths } from '../firebase';
+import { FilamentDoc, FilamentInput, PrintItem } from '../types';
 
 export enum OperationType {
   CREATE = 'create',
@@ -46,7 +39,7 @@ interface FirestoreErrorInfo {
   }
 }
 
-function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null): never {
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
@@ -69,144 +62,123 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
   throw new Error(JSON.stringify(errInfo));
 }
 
-/**
- * Recomputes the quantity of several filaments in one transaction, so the change is
- * all-or-nothing and based on the latest server values (not a possibly stale local copy).
- */
-async function updateQuantities(
-  amounts: Record<string, number>,
-  computeQuantity: (filament: Filament, amount: number) => number
-): Promise<void> {
+export function currentUid(): string {
   if (!auth.currentUser) throw new Error('User not authenticated');
+  return auth.currentUser.uid;
+}
 
-  const entries = Object.entries(amounts).filter(([_, amount]) => amount > 0);
-  if (entries.length === 0) return;
+/** Keeps the entries with a positive amount, rounded to whole numbers. */
+const positiveAmounts = (amounts: Record<string, number>, round: (n: number) => number = n => n) =>
+  new Map(Object.entries(amounts).filter(([_, amount]) => amount > 0).map(([id, amount]) => [id, round(amount)]));
 
-  try {
-    await runTransaction(db, async (transaction) => {
-      const refs = entries.map(([id]) => doc(db, COLLECTION_NAME, id));
-      const snapshots = await Promise.all(refs.map(ref => transaction.get(ref)));
-      const now = new Date().toISOString();
-
-      snapshots.forEach((snapshot, i) => {
-        if (!snapshot.exists()) return;
-        transaction.update(refs[i], {
-          quantity: computeQuantity(snapshot.data() as Filament, entries[i][1]),
-          lastUsed: now
-        });
-      });
-    });
-  } catch (error) {
-    handleFirestoreError(error, OperationType.UPDATE, COLLECTION_NAME);
-  }
+/** Reads the given filaments inside a transaction, skipping ids that no longer exist. */
+async function readFilaments(transaction: Transaction, uid: string, ids: string[]) {
+  const snapshots = await Promise.all(ids.map(id => transaction.get(paths.filament(uid, id))));
+  return snapshots
+    .filter(snapshot => snapshot.exists())
+    .map(snapshot => ({ ref: snapshot.ref, data: snapshot.data() as Omit<FilamentDoc, 'id'> }));
 }
 
 export const filamentService = {
-  subscribeToFilaments: (callback: (filaments: Filament[]) => void, onError?: (error: any) => void) => {
-    if (!auth.currentUser) return () => {};
-
-    const filamentsQuery = query(
-      collection(db, COLLECTION_NAME),
-      where('uid', '==', auth.currentUser.uid),
-      orderBy('createdAt', 'desc')
-    );
-
-    return onSnapshot(filamentsQuery, (snapshot) => {
-      const filaments: Filament[] = snapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id
-      } as Filament));
+  subscribeToFilaments: (callback: (filaments: FilamentDoc[]) => void, onError?: (error: any) => void) => {
+    const uid = currentUid();
+    return onSnapshot(paths.filaments(uid), (snapshot) => {
+      const filaments = snapshot.docs.map(d => ({
+        // Pending server timestamps get a local estimate instead of null
+        ...d.data({ serverTimestamps: 'estimate' }),
+        id: d.id
+      } as FilamentDoc));
       callback(filaments);
     }, (error) => {
       if (onError) onError(error);
-      handleFirestoreError(error, OperationType.LIST, COLLECTION_NAME);
+      handleFirestoreError(error, OperationType.LIST, `users/${uid}/filaments`);
     });
   },
 
-  addFilament: async (formData: FilamentFormData): Promise<string> => {
-    if (!auth.currentUser) throw new Error('User not authenticated');
-
-    const newFilament = {
-      ...formData,
-      uid: auth.currentUser.uid,
-      lastUsed: new Date().toISOString(),
-      createdAt: new Date().toISOString()
-    };
-
+  addFilament: async (input: FilamentInput): Promise<string> => {
+    const uid = currentUid();
     try {
-      const docRef = await addDoc(collection(db, COLLECTION_NAME), newFilament);
+      const docRef = await addDoc(paths.filaments(uid), {
+        ...input,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
       return docRef.id;
     } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, COLLECTION_NAME);
-      return '';
+      handleFirestoreError(error, OperationType.CREATE, `users/${uid}/filaments`);
     }
   },
 
-  updateFilament: async (id: string, formData: Partial<FilamentFormData>): Promise<void> => {
-    if (!auth.currentUser) throw new Error('User not authenticated');
-
-    const docRef = doc(db, COLLECTION_NAME, id);
+  updateFilament: async (id: string, input: Partial<FilamentInput>): Promise<void> => {
+    const uid = currentUid();
     try {
-      await updateDoc(docRef, {
-        ...formData,
-        lastUsed: new Date().toISOString()
-      });
+      await updateDoc(paths.filament(uid, id), { ...input, updatedAt: serverTimestamp() });
     } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, `${COLLECTION_NAME}/${id}`);
-    }
-  },
-
-  /** Adds whole spools per filament id (a delivery). */
-  addSpools: (spoolsById: Record<string, number>) =>
-    updateQuantities(spoolsById, (filament, spools) =>
-      Number((filament.quantity + spools).toFixed(2))
-    ),
-
-  /** Subtracts grams used per filament id (a print), never going below zero. */
-  consumeGrams: (gramsById: Record<string, number>) =>
-    updateQuantities(gramsById, (filament, grams) => {
-      const spoolUsage = grams / (filament.spoolWeight || 1000);
-      return Number(Math.max(0, filament.quantity - spoolUsage).toFixed(3));
-    }),
-
-  /** Moves all of the current user's filaments from one type name to another. */
-  renameType: async (oldName: string, newName: string): Promise<void> => {
-    if (!auth.currentUser) throw new Error('User not authenticated');
-
-    try {
-      const snapshot = await getDocs(query(
-        collection(db, COLLECTION_NAME),
-        where('uid', '==', auth.currentUser.uid),
-        where('type', '==', oldName)
-      ));
-      if (snapshot.empty) return;
-
-      const batch = writeBatch(db);
-      snapshot.docs.forEach(d => batch.update(d.ref, { type: newName }));
-      await batch.commit();
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, COLLECTION_NAME);
+      handleFirestoreError(error, OperationType.UPDATE, `users/${uid}/filaments/${id}`);
     }
   },
 
   deleteFilament: async (id: string): Promise<void> => {
-    if (!auth.currentUser) throw new Error('User not authenticated');
-
-    const docRef = doc(db, COLLECTION_NAME, id);
+    const uid = currentUid();
     try {
-      await deleteDoc(docRef);
+      await deleteDoc(paths.filament(uid, id));
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `${COLLECTION_NAME}/${id}`);
+      handleFirestoreError(error, OperationType.DELETE, `users/${uid}/filaments/${id}`);
     }
   },
 
-  testConnection: async () => {
+  /**
+   * Registers a delivery: adds whole spools per filament id. Runs as one transaction on the
+   * latest server values, so it is all-or-nothing and safe when several devices are in use.
+   */
+  addSpools: async (spoolsById: Record<string, number>): Promise<void> => {
+    const uid = currentUid();
+    const spools = positiveAmounts(spoolsById);
+    if (spools.size === 0) return;
+
     try {
-      await getDocFromServer(doc(db, 'test', 'connection'));
+      await runTransaction(db, async (transaction) => {
+        const filaments = await readFilaments(transaction, uid, [...spools.keys()]);
+        filaments.forEach(({ ref, data }) => {
+          transaction.update(ref, {
+            remainingGrams: data.remainingGrams + Math.round(spools.get(ref.id)! * data.spoolWeight),
+            updatedAt: serverTimestamp()
+          });
+        });
+      });
     } catch (error) {
-      if(error instanceof Error && error.message.includes('the client is offline')) {
-        console.error("Please check your Firebase configuration.");
-      }
+      handleFirestoreError(error, OperationType.UPDATE, `users/${uid}/filaments`);
     }
-  }
+  },
+
+  /**
+   * Registers a print: subtracts the grams used per filament id (never below zero) and adds
+   * an entry to the print log, all in one transaction.
+   */
+  logPrint: async (gramsById: Record<string, number>): Promise<void> => {
+    const uid = currentUid();
+    const usage = positiveAmounts(gramsById, Math.round);
+    if (usage.size === 0) return;
+
+    try {
+      await runTransaction(db, async (transaction) => {
+        const filaments = await readFilaments(transaction, uid, [...usage.keys()]);
+        const items: PrintItem[] = filaments.map(({ ref, data }) => {
+          const grams = usage.get(ref.id)!;
+          transaction.update(ref, {
+            remainingGrams: Math.max(0, data.remainingGrams - grams),
+            updatedAt: serverTimestamp(),
+            lastUsedAt: serverTimestamp()
+          });
+          return { filamentId: ref.id, typeId: data.typeId, colorName: data.colorName, colorHex: data.colorHex, grams };
+        });
+
+        if (items.length > 0) {
+          transaction.set(doc(paths.prints(uid)), { createdAt: serverTimestamp(), items });
+        }
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, `users/${uid}/prints`);
+    }
+  },
 };

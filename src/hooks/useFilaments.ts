@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
-import { Filament } from '../types';
+import { FilamentDoc } from '../types';
 import { filamentService } from '../services/filamentService';
 
-export function useFilaments(user: FirebaseUser | null, isAuthReady: boolean) {
-  const [filaments, setFilaments] = useState<Filament[]>([]);
+export function useFilaments(user: FirebaseUser | null, isReady: boolean) {
+  const [filaments, setFilaments] = useState<FilamentDoc[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isAuthReady || !user) {
+    if (!isReady || !user) {
       setFilaments([]);
       return;
     }
@@ -30,7 +30,7 @@ export function useFilaments(user: FirebaseUser | null, isAuthReady: boolean) {
     });
 
     return () => unsubscribeFilaments();
-  }, [isAuthReady, user]);
+  }, [isReady, user]);
 
   return { filaments, error };
 }

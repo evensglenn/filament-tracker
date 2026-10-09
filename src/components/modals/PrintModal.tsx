@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Minus, Plus, Printer } from 'lucide-react';
 import { Filament } from '../../types';
+import { formatSpools } from '../../utils/filaments';
 import { filamentService } from '../../services/filamentService';
 import { Modal, ModalBanner, WIDE_MODAL_CLASS } from '../ui/Modal';
 import { SwatchCard, SWATCH_GRID_CLASS } from '../ui/SwatchCard';
@@ -27,7 +28,7 @@ function PrintContent({ onClose, filaments }: Omit<PrintModalProps, 'isOpen'>) {
 
   const handleConfirm = async () => {
     try {
-      await filamentService.consumeGrams(printUsages);
+      await filamentService.logPrint(printUsages);
       onClose();
     } catch (error) {
       console.error('Failed to confirm print:', error);
@@ -45,7 +46,7 @@ function PrintContent({ onClose, filaments }: Omit<PrintModalProps, 'isOpen'>) {
             return (
               <SwatchCard key={f.id} filament={f}>
                 <p className="text-[10px] font-bold text-gray-400 mt-1">
-                  Voorraad: {f.quantity} rollen
+                  Voorraad: {formatSpools(f.spools)} rollen ({f.remainingGrams} g)
                 </p>
 
                 <div className="mt-2 space-y-1">

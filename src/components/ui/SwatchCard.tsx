@@ -19,7 +19,7 @@ export function SwatchCard({ filament, children }: SwatchCardProps) {
           {filament.colorName}
         </p>
         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
-          {filament.type}
+          {filament.typeName}
         </p>
         {children}
       </div>

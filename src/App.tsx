@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Filament } from './types';
 import { filamentService } from './services/filamentService';
 import { useAuth } from './hooks/useAuth';
+import { useDataMigration } from './hooks/useDataMigration';
 import { useFilaments } from './hooks/useFilaments';
 import { useFilamentFilters } from './hooks/useFilamentFilters';
 import { useUserConfig } from './hooks/useUserConfig';
 import { useHideOnScroll } from './hooks/useHideOnScroll';
+import { toInventory } from './utils/filaments';
 import { Header } from './components/Header';
 import { ErrorScreen, LoadingScreen, LoginScreen } from './components/StatusScreens';
 import { Toolbar } from './components/inventory/Toolbar';
@@ -21,8 +23,15 @@ type ActiveModal = 'form' | 'settings' | 'overview' | 'delivery' | 'print' | nul
 
 export default function App() {
   const { user, isAuthReady, login, logout } = useAuth();
-  const { filaments, error } = useFilaments(user, isAuthReady);
-  const { config, actions: configActions } = useUserConfig(user, isAuthReady);
+  const { isReady, error: migrationError } = useDataMigration(user);
+  const { filaments: filamentDocs, error: filamentsError } = useFilaments(user, isReady);
+  const { config, actions: configActions } = useUserConfig(user, isReady);
+  const filaments = useMemo(() => toInventory(filamentDocs, config?.types ?? []), [filamentDocs, config]);
+  const typeUsage = useMemo(() => {
+    const usage = new Map<string, number>();
+    filamentDocs.forEach(f => usage.set(f.typeId, (usage.get(f.typeId) ?? 0) + 1));
+    return usage;
+  }, [filamentDocs]);
   const filters = useFilamentFilters(filaments);
   const showHeader = useHideOnScroll();
 
@@ -48,6 +57,7 @@ export default function App() {
     setDeleteId(null);
   };
 
+  const error = migrationError ?? filamentsError;
   if (error) {
     return <ErrorScreen message={error} />;
   }
@@ -65,7 +75,7 @@ export default function App() {
       />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-        {!isAuthReady ? (
+        {!isAuthReady || (user && !isReady) ? (
           <LoadingScreen />
         ) : !user ? (
           <LoginScreen onLogin={login} />
@@ -97,6 +107,7 @@ export default function App() {
         onClose={closeModal}
         config={config}
         configActions={configActions}
+        typeUsage={typeUsage}
       />
 
       <DeleteConfirmModal

@@ -4,10 +4,12 @@ import { ConfigActions } from '../../hooks/useUserConfig';
 
 interface TypeSettingsProps {
   types: ManagedType[];
+  /** Number of filaments per type id; a type in use can't be deleted. */
+  usage: Map<string, number>;
   actions: ConfigActions;
 }
 
-export function TypeSettings({ types, actions }: TypeSettingsProps) {
+export function TypeSettings({ types, usage, actions }: TypeSettingsProps) {
   return (
     <section>
       <div className="flex items-center justify-between mb-4">
@@ -34,14 +36,14 @@ export function TypeSettings({ types, actions }: TypeSettingsProps) {
 
       <div className="space-y-4">
         {types.map((type) => (
-          <TypeEditor key={type.id} type={type} actions={actions} />
+          <TypeEditor key={type.id} type={type} usedBy={usage.get(type.id) ?? 0} actions={actions} />
         ))}
       </div>
     </section>
   );
 }
 
-function TypeEditor({ type, actions }: { type: ManagedType; actions: ConfigActions }) {
+function TypeEditor({ type, usedBy, actions }: { type: ManagedType; usedBy: number; actions: ConfigActions }) {
   return (
     <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200">
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
@@ -61,7 +63,9 @@ function TypeEditor({ type, actions }: { type: ManagedType; actions: ConfigActio
         />
         <button
           onClick={() => actions.deleteType(type.id)}
-          className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors shrink-0"
+          disabled={usedBy > 0}
+          title={usedBy > 0 ? `In gebruik door ${usedBy} filament${usedBy === 1 ? '' : 'en'}` : 'Verwijder type'}
+          className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors shrink-0 disabled:text-gray-300 disabled:hover:bg-transparent disabled:cursor-not-allowed"
         >
           <Trash2 size={16} />
         </button>
@@ -79,22 +83,22 @@ function TypeEditor({ type, actions }: { type: ManagedType; actions: ConfigActio
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-          {type.presets.map((preset, pIdx) => (
-            <div key={pIdx} className="group relative flex items-center gap-2 p-1 bg-white border border-gray-200 rounded-lg">
+          {type.presets.map((preset) => (
+            <div key={preset.id} className="group relative flex items-center gap-2 p-1 bg-white border border-gray-200 rounded-lg">
               <input
                 type="color"
                 value={preset.hex}
-                onChange={(e) => actions.updatePreset(type.id, pIdx, { hex: e.target.value })}
+                onChange={(e) => actions.updatePreset(type.id, preset.id, { hex: e.target.value })}
                 className="w-6 h-6 p-0 border-none bg-transparent cursor-pointer rounded overflow-hidden"
               />
               <input
                 type="text"
                 value={preset.name}
-                onChange={(e) => actions.updatePreset(type.id, pIdx, { name: e.target.value })}
+                onChange={(e) => actions.updatePreset(type.id, preset.id, { name: e.target.value })}
                 className="flex-1 min-w-0 text-[10px] font-bold outline-none bg-transparent"
               />
               <button
-                onClick={() => actions.removePreset(type.id, pIdx)}
+                onClick={() => actions.removePreset(type.id, preset.id)}
                 className="opacity-0 group-hover:opacity-100 absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center transition-opacity"
               >
                 <X size={10} />

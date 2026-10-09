@@ -1,18 +1,17 @@
 import { Ref } from 'react';
 import { motion } from 'motion/react';
-import { Disc, Lock } from 'lucide-react';
+import { Disc } from 'lucide-react';
 import { Filament } from '../../types';
 import { getQuantityColor } from '../../utils/filaments';
 
 interface FilamentCardProps {
   filament: Filament;
-  isOwner: boolean;
   onEdit: (filament: Filament) => void;
   /** Forwarded so AnimatePresence's popLayout mode can measure the card. */
   ref?: Ref<HTMLDivElement>;
 }
 
-export function FilamentCard({ filament, isOwner, onEdit, ref }: FilamentCardProps) {
+export function FilamentCard({ filament, onEdit, ref }: FilamentCardProps) {
   return (
     <motion.div
       ref={ref}
@@ -20,10 +19,8 @@ export function FilamentCard({ filament, isOwner, onEdit, ref }: FilamentCardPro
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      onClick={() => {
-        if (isOwner) onEdit(filament);
-      }}
-      className={`bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all group flex ${isOwner ? 'cursor-pointer' : 'cursor-default'}`}
+      onClick={() => onEdit(filament)}
+      className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all group flex cursor-pointer"
     >
       <div className="flex-1 p-4 min-w-0">
         <div className="flex items-center gap-3 min-w-0">
@@ -39,14 +36,6 @@ export function FilamentCard({ filament, isOwner, onEdit, ref }: FilamentCardPro
               <span className="text-[10px] font-bold px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded uppercase tracking-wider inline-block">
                 {filament.type}
               </span>
-              {!isOwner && (
-                <div className="flex items-center gap-1">
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded uppercase tracking-wider inline-block">
-                    {filament.ownerName || 'Gedeeld'}
-                  </span>
-                  <Lock size={10} className="text-gray-400" />
-                </div>
-              )}
             </div>
             <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest mt-0.5 truncate">
               {filament.brand}

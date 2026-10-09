@@ -42,23 +42,21 @@ export const configService = {
         callback(initialConfig);
       }
     });
-  },
-
-  async importBambuDefaults(uid: string, currentConfig: UserConfig): Promise<void> {
-    const updatedTypes = [...currentConfig.types];
-    
-    DEFAULT_BAMBU_TYPES.forEach(defaultType => {
-      const existingIndex = updatedTypes.findIndex(t => t.name === defaultType.name && t.brand === defaultType.brand);
-      if (existingIndex > -1) {
-        updatedTypes[existingIndex] = { ...defaultType };
-      } else {
-        updatedTypes.push(defaultType);
-      }
-    });
-
-    await this.saveConfig({
-      ...currentConfig,
-      types: updatedTypes
-    });
   }
 };
+
+/** Adds the default Bambu Lab types, overwriting existing ones with the same name and brand. */
+export function mergeBambuDefaults(types: ManagedType[]): ManagedType[] {
+  const updatedTypes = [...types];
+
+  DEFAULT_BAMBU_TYPES.forEach(defaultType => {
+    const existingIndex = updatedTypes.findIndex(t => t.name === defaultType.name && t.brand === defaultType.brand);
+    if (existingIndex > -1) {
+      updatedTypes[existingIndex] = { ...defaultType };
+    } else {
+      updatedTypes.push(defaultType);
+    }
+  });
+
+  return updatedTypes;
+}

@@ -76,7 +76,7 @@ export function Toolbar({ filters, onOpenOverview }: ToolbarProps) {
           key={`${filterType}-${searchQuery}`}
           onClick={onOpenOverview}
           className="flex items-center gap-3 shrink-0 cursor-pointer hover:opacity-70 transition-opacity"
-          title="Deel dit overzicht"
+          title="Bekijk overzicht"
         >
           <div className="flex -space-x-2">
             {filtered.slice(0, 5).map((f, i) => (

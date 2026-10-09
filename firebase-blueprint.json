@@ -5,53 +5,88 @@
       "description": "A 3D printing filament spool in the inventory",
       "type": "object",
       "properties": {
-        "id": { "type": "string", "description": "Document ID" },
-        "uid": { "type": "string", "description": "Owner User ID" },
-        "brand": { "type": "string" },
-        "type": { "type": "string" },
-        "colorName": { "type": "string" },
-        "colorHex": { "type": "string" },
-        "quantity": { "type": "number" },
-        "spoolWeight": { "type": "number", "description": "Weight of a full spool in grams" },
-        "notes": { "type": "string" },
-        "lastUsed": { "type": "string", "format": "date-time" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["uid", "brand", "type", "colorName", "colorHex", "quantity", "spoolWeight"]
-    },
-    "Share": {
-      "title": "Share",
-      "description": "List of emails that have access to a user's inventory",
-      "type": "object",
-      "properties": {
-        "emails": {
-          "type": "array",
-          "items": { "type": "string" }
+        "id": {
+          "type": "string",
+          "description": "Document ID"
+        },
+        "uid": {
+          "type": "string",
+          "description": "Owner User ID"
+        },
+        "brand": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "colorName": {
+          "type": "string"
+        },
+        "colorHex": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "number"
+        },
+        "spoolWeight": {
+          "type": "number",
+          "description": "Weight of a full spool in grams"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "lastUsed": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
         }
       },
-      "required": ["emails"]
+      "required": [
+        "uid",
+        "brand",
+        "type",
+        "colorName",
+        "colorHex",
+        "quantity",
+        "spoolWeight"
+      ]
     },
     "UserConfig": {
       "title": "User Config",
       "description": "User specific configurations for types and presets",
       "type": "object",
       "properties": {
-        "uid": { "type": "string" },
+        "uid": {
+          "type": "string"
+        },
         "types": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
-              "id": { "type": "string" },
-              "name": { "type": "string" },
-              "brand": { "type": "string" },
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "brand": {
+                "type": "string"
+              },
               "presets": {
                 "type": "array",
                 "items": {
                   "type": "object",
                   "properties": {
-                    "name": { "type": "string" },
-                    "hex": { "type": "string" }
+                    "name": {
+                      "type": "string"
+                    },
+                    "hex": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -59,7 +94,9 @@
           }
         }
       },
-      "required": ["uid"]
+      "required": [
+        "uid"
+      ]
     }
   },
   "firestore": {
@@ -70,10 +107,6 @@
     "/userConfigs/{uid}": {
       "schema": "UserConfig",
       "description": "User specific settings and types"
-    },
-    "/shares/{ownerUid}": {
-      "schema": "Share",
-      "description": "Sharing settings for a user"
     }
   }
 }

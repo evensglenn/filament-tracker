@@ -20,7 +20,6 @@ export interface UserConfig {
 export interface Filament {
   id: string;
   uid: string;
-  ownerName?: string;
   brand: string;
   type: FilamentType;
   colorName: string;

@@ -2,7 +2,6 @@ import { X } from 'lucide-react';
 import { UserConfig } from '../../types';
 import { ConfigActions } from '../../hooks/useUserConfig';
 import { Modal } from '../ui/Modal';
-import { SharingSettings } from './SharingSettings';
 import { TypeSettings } from './TypeSettings';
 
 interface SettingsModalProps {
@@ -10,12 +9,14 @@ interface SettingsModalProps {
   onClose: () => void;
   config: UserConfig | null;
   configActions: ConfigActions;
-  sharedEmails: string[];
-  onAddShare: (email: string) => void;
-  onRemoveShare: (email: string) => void;
 }
 
-export function SettingsModal({ isOpen, onClose, config, configActions, sharedEmails, onAddShare, onRemoveShare }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose: close, config, configActions }: SettingsModalProps) {
+  const onClose = () => {
+    configActions.flush();
+    close();
+  };
+
   return (
     <Modal
       isOpen={isOpen && config !== null}
@@ -36,8 +37,7 @@ export function SettingsModal({ isOpen, onClose, config, configActions, sharedEm
         </button>
       </div>
 
-      <div className="p-6 overflow-y-auto flex-1 space-y-10">
-        <SharingSettings sharedEmails={sharedEmails} onAdd={onAddShare} onRemove={onRemoveShare} />
+      <div className="p-6 overflow-y-auto flex-1">
         {config && <TypeSettings types={config.types} actions={configActions} />}
       </div>
 

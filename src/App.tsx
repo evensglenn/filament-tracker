@@ -5,7 +5,6 @@ import { useAuth } from './hooks/useAuth';
 import { useFilaments } from './hooks/useFilaments';
 import { useFilamentFilters } from './hooks/useFilamentFilters';
 import { useUserConfig } from './hooks/useUserConfig';
-import { useShares } from './hooks/useShares';
 import { useHideOnScroll } from './hooks/useHideOnScroll';
 import { Header } from './components/Header';
 import { ErrorScreen, LoadingScreen, LoginScreen } from './components/StatusScreens';
@@ -24,7 +23,6 @@ export default function App() {
   const { user, isAuthReady, login, logout } = useAuth();
   const { filaments, error } = useFilaments(user, isAuthReady);
   const { config, actions: configActions } = useUserConfig(user, isAuthReady);
-  const { sharedEmails, addShare, removeShare } = useShares(user);
   const filters = useFilamentFilters(filaments);
   const showHeader = useHideOnScroll();
 
@@ -78,7 +76,6 @@ export default function App() {
               filaments={filters.filtered}
               hasInventory={filaments.length > 0}
               isFiltered={filters.isFiltered}
-              currentUid={user.uid}
               onEdit={openForm}
               onAdd={() => openForm()}
               onResetFilters={filters.resetFilters}
@@ -100,9 +97,6 @@ export default function App() {
         onClose={closeModal}
         config={config}
         configActions={configActions}
-        sharedEmails={sharedEmails}
-        onAddShare={addShare}
-        onRemoveShare={removeShare}
       />
 
       <DeleteConfirmModal

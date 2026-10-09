@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, LayoutGrid, Search } from 'lucide-react';
+import { ArrowDown, ArrowUp, Image as ImageIcon, Search } from 'lucide-react';
 import { FilamentFilters } from '../../hooks/useFilamentFilters';
 import { FilterOption, formatSpools, SortField } from '../../utils/filaments';
 
@@ -48,9 +48,9 @@ export function Toolbar({ filters, lowCount, onOpenOverview }: ToolbarProps) {
         <button
           onClick={onOpenOverview}
           className="h-11 px-3.5 flex items-center gap-2 bg-white border border-gray-200 rounded-xl hover:border-gray-300 transition-colors shrink-0"
-          title="Overzicht van alle kleuren"
+          title="Overzicht als afbeelding"
         >
-          <LayoutGrid size={16} className="text-gray-500" />
+          <ImageIcon size={16} className="text-gray-500" />
           <span className="text-sm font-semibold tabular-nums">{formatSpools(totalSpools)}</span>
           <span className="text-sm text-gray-500 hidden sm:inline">rollen</span>
         </button>

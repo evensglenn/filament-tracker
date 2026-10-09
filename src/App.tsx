@@ -17,6 +17,7 @@ import { DeleteConfirmModal } from './components/modals/DeleteConfirmModal';
 import { DeliveryModal } from './components/modals/DeliveryModal';
 import { PrintModal } from './components/modals/PrintModal';
 import { SettingsModal } from './components/settings/SettingsModal';
+import { useShowError } from './components/ui/Toast';
 
 type ActiveModal = 'form' | 'settings' | 'delivery' | 'print' | null;
 
@@ -38,6 +39,7 @@ export default function App() {
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const [editingFilament, setEditingFilament] = useState<Filament | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const showError = useShowError();
 
   const closeModal = () => setActiveModal(null);
 
@@ -53,8 +55,13 @@ export default function App() {
 
   const confirmDelete = async () => {
     if (!deleteId) return;
-    await filamentService.deleteFilament(deleteId);
-    setDeleteId(null);
+    try {
+      await filamentService.deleteFilament(deleteId);
+      setDeleteId(null);
+    } catch (error) {
+      // The question stays open, so deleting can simply be retried
+      showError('Verwijderen', error);
+    }
   };
 
   const error = accountError ?? filamentsError;

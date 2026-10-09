@@ -5,6 +5,7 @@ import { filamentService } from '../../services/filamentService';
 import { formatSpoolsWithUnit } from '../../utils/filaments';
 import { Modal, ModalFooter, ModalHeader, PRIMARY_BUTTON, SECONDARY_BUTTON } from '../ui/Modal';
 import { FilamentPicker } from '../ui/FilamentPicker';
+import { useShowError } from '../ui/Toast';
 
 const byName = (a: Filament, b: Filament) => a.colorName.localeCompare(b.colorName);
 
@@ -26,6 +27,7 @@ export function DeliveryModal({ isOpen, onClose, filaments }: DeliveryModalProps
 function DeliveryContent({ onClose, filaments }: Omit<DeliveryModalProps, 'isOpen'>) {
   const [deliveryQuantities, setDeliveryQuantities] = useState<Record<string, number>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const showError = useShowError();
 
   const totalSpools = Object.values(deliveryQuantities).reduce((sum, n) => sum + n, 0);
   const change = (id: string, delta: number) =>
@@ -37,7 +39,7 @@ function DeliveryContent({ onClose, filaments }: Omit<DeliveryModalProps, 'isOpe
       await filamentService.addSpools(deliveryQuantities);
       onClose();
     } catch (error) {
-      console.error('Failed to confirm delivery:', error);
+      showError('Levering registreren', error);
       setIsSaving(false);
     }
   };

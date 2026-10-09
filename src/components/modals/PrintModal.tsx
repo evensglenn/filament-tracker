@@ -5,6 +5,7 @@ import { filamentService } from '../../services/filamentService';
 import { byRecentUse } from '../../utils/filaments';
 import { Modal, ModalFooter, ModalHeader, PRIMARY_BUTTON, SECONDARY_BUTTON } from '../ui/Modal';
 import { FilamentPicker } from '../ui/FilamentPicker';
+import { useShowError } from '../ui/Toast';
 
 interface PrintModalProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ export function PrintModal({ isOpen, onClose, filaments }: PrintModalProps) {
 function PrintContent({ onClose, filaments }: Omit<PrintModalProps, 'isOpen'>) {
   const [printUsages, setPrintUsages] = useState<Record<string, number>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const showError = useShowError();
 
   const used = Object.values(printUsages).filter(grams => grams > 0);
   const totalGrams = used.reduce((sum, grams) => sum + grams, 0);
@@ -34,7 +36,7 @@ function PrintContent({ onClose, filaments }: Omit<PrintModalProps, 'isOpen'>) {
       await filamentService.logPrint(printUsages);
       onClose();
     } catch (error) {
-      console.error('Failed to confirm print:', error);
+      showError('Print registreren', error);
       setIsSaving(false);
     }
   };

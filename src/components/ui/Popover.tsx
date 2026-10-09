@@ -31,10 +31,13 @@ export function Popover({ trigger, children, className = '', panelClassName = 'w
   return (
     <div className={`relative ${className}`}>
       {/* Invisible backdrop: a tap outside closes the panel without also hitting what lies below.
-          Rendered in <body>, because a transformed or blurred parent would confine "fixed" to itself. */}
-      {isOpen && createPortal(<div className="fixed inset-0 z-30" aria-hidden onClick={close} />, document.body)}
+          Rendered in <body>, because a transformed or blurred parent would confine "fixed" to itself.
+          It sits under the sticky header (z-40), so the header's own menu stays usable. */}
+      {isOpen && createPortal(<div className="fixed inset-0 z-[31]" aria-hidden onClick={close} />, document.body)}
 
-      <div className="relative z-40">{trigger({ isOpen, toggle: () => setIsOpen(open => !open) })}</div>
+      {/* Only an open popover lifts its button above the backdrop, so the button can close it again;
+          other buttons stay below, and can't show through another open menu */}
+      <div className={`relative ${isOpen ? 'z-[32]' : ''}`}>{trigger({ isOpen, toggle: () => setIsOpen(open => !open) })}</div>
 
       <AnimatePresence>
         {isOpen && (
@@ -44,7 +47,7 @@ export function Popover({ trigger, children, className = '', panelClassName = 'w
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.97 }}
             transition={{ duration: 0.12 }}
-            className={`absolute right-0 top-full mt-2 z-40 origin-top-right bg-white rounded-2xl shadow-xl shadow-gray-900/10 border border-gray-200 p-1.5 ${panelClassName}`}
+            className={`absolute right-0 top-full mt-2 z-[32] origin-top-right bg-white rounded-2xl shadow-xl shadow-gray-900/10 border border-gray-200 p-1.5 ${panelClassName}`}
           >
             {children(close)}
           </motion.div>

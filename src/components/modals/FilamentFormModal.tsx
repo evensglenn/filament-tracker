@@ -89,6 +89,8 @@ function FilamentForm({ filament, types, onClose, onRequestDelete }: Omit<Filame
               }}
               className={INPUT_CLASS}
             >
+              {/* Keep a type that was removed from the settings selectable, instead of silently showing another one */}
+              {!types.some(t => t.name === formData.type) && <option value={formData.type}>{formData.type}</option>}
               {types.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
             </select>
           </div>

@@ -8,13 +8,12 @@ interface FilamentGridProps {
   /** Whether the unfiltered inventory has any filaments at all. */
   hasInventory: boolean;
   isFiltered: boolean;
-  currentUid: string;
   onEdit: (filament: Filament) => void;
   onAdd: () => void;
   onResetFilters: () => void;
 }
 
-export function FilamentGrid({ filaments, hasInventory, isFiltered, currentUid, onEdit, onAdd, onResetFilters }: FilamentGridProps) {
+export function FilamentGrid({ filaments, hasInventory, isFiltered, onEdit, onAdd, onResetFilters }: FilamentGridProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
       <AnimatePresence mode="popLayout">
@@ -22,7 +21,6 @@ export function FilamentGrid({ filaments, hasInventory, isFiltered, currentUid, 
           <FilamentCard
             key={filament.id}
             filament={filament}
-            isOwner={filament.uid === currentUid}
             onEdit={onEdit}
           />
         ))}

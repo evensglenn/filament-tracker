@@ -26,23 +26,8 @@ function PrintContent({ onClose, filaments }: Omit<PrintModalProps, 'isOpen'>) {
   const [printUsages, setPrintUsages] = useState<Record<string, number>>({});
 
   const handleConfirm = async () => {
-    const updates = Object.entries(printUsages).filter(([_, usage]) => usage > 0);
-    if (updates.length === 0) {
-      onClose();
-      return;
-    }
-
     try {
-      for (const [id, usage] of updates) {
-        const filament = filaments.find(f => f.id === id);
-        if (filament) {
-          // usage is in grams, spoolWeight is in grams
-          const spoolUsage = usage / (filament.spoolWeight || 1000);
-          await filamentService.updateFilament(id, {
-            quantity: Number(Math.max(0, filament.quantity - spoolUsage).toFixed(3))
-          });
-        }
-      }
+      await filamentService.consumeGrams(printUsages);
       onClose();
     } catch (error) {
       console.error('Failed to confirm print:', error);

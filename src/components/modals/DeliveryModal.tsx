@@ -24,21 +24,8 @@ function DeliveryContent({ onClose, filaments }: Omit<DeliveryModalProps, 'isOpe
   const [deliveryQuantities, setDeliveryQuantities] = useState<Record<string, number>>({});
 
   const handleConfirm = async () => {
-    const updates = Object.entries(deliveryQuantities).filter(([_, qty]) => qty > 0);
-    if (updates.length === 0) {
-      onClose();
-      return;
-    }
-
     try {
-      for (const [id, qty] of updates) {
-        const filament = filaments.find(f => f.id === id);
-        if (filament) {
-          await filamentService.updateFilament(id, {
-            quantity: Number((filament.quantity + qty).toFixed(2))
-          });
-        }
-      }
+      await filamentService.addSpools(deliveryQuantities);
       onClose();
     } catch (error) {
       console.error('Failed to confirm delivery:', error);
